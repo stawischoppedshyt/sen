@@ -1,4 +1,3 @@
-
 local UserInputService = game:GetService("UserInputService")
 local Lighting         = game:GetService("Lighting")
 local TweenService     = game:GetService("TweenService")
@@ -53,8 +52,9 @@ if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and
     local subHeader = Instance.new("Frame")
     subHeader.Name = "SubHeader"; subHeader.Size = UDim2.new(1, 0, 0, 42); subHeader.BackgroundTransparency = 1; subHeader.ZIndex = 3; subHeader.Parent = subMenuFrame
 
+    -- FIX: Replaced broken asset ID with your functional local Blatant custom asset image
     local subHeaderSkull = Instance.new("ImageLabel")
-    subHeaderSkull.Name = "SkullIcon"; subHeaderSkull.Size = UDim2.new(0, 18, 0, 18); subHeaderSkull.Position = UDim2.new(0, 14, 0.5, 0); subHeaderSkull.AnchorPoint = Vector2.new(0, 0.5); subHeaderSkull.BackgroundTransparency = 1; subHeaderSkull.Image = "rbxassetid://18287498772"; subHeaderSkull.ImageColor3 = Color3.fromRGB(90, 90, 90); subHeaderSkull.ZIndex = 4; subHeaderSkull.Parent = subHeader
+    subHeaderSkull.Name = "SkullIcon"; subHeaderSkull.Size = UDim2.new(0, 18, 0, 18); subHeaderSkull.Position = UDim2.new(0, 14, 0.5, 0); subHeaderSkull.AnchorPoint = Vector2.new(0, 0.5); subHeaderSkull.BackgroundTransparency = 1; subHeaderSkull.Image = getcustomasset(blatantIconPath); subHeaderSkull.ImageColor3 = Color3.fromRGB(90, 90, 90); subHeaderSkull.ZIndex = 4; subHeaderSkull.Parent = subHeader
 
     local subHeaderTitle = Instance.new("TextLabel")
     subHeaderTitle.Name = "Title"; subHeaderTitle.Size = UDim2.new(1, -56, 1, 0); subHeaderTitle.Position = UDim2.new(0, 42, 0, 0); subHeaderTitle.BackgroundTransparency = 1; subHeaderTitle.Text = "Blatant"; subHeaderTitle.TextColor3 = Color3.fromRGB(90, 90, 90); subHeaderTitle.Font = Enum.Font.GothamMedium; subHeaderTitle.TextSize = 14; subHeaderTitle.TextXAlignment = Enum.TextXAlignment.Left; subHeaderTitle.ZIndex = 4; subHeaderTitle.Parent = subHeader
@@ -142,7 +142,6 @@ if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Name = "Title"; titleLabel.Size = UDim2.new(1, -100, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Speed"; titleLabel.TextColor3 = idleMainColor; titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
 
-        -- Dark background (RGB 238) for the dropdown container background
         local settingsDrawer = Instance.new("Frame")
         settingsDrawer.Name = "SettingsDrawer"; settingsDrawer.Size = UDim2.new(1, 0, 0, 110); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BackgroundColor3 = Color3.fromRGB(238, 238, 238); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
 
@@ -172,7 +171,6 @@ if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and
         local function toggleSpeedState() speedEnabled = not speedEnabled; TweenService:Create(titleLabel, tweenInfo, {TextColor3 = speedEnabled and accentColor or idleMainColor}):Play() end
         mainButton.MouseButton1Click:Connect(toggleSpeedState)
 
-        -- Clean, high contrast fields (RGB 248) inside the darker dropdown background
         local modeField = Instance.new("TextLabel")
         modeField.Size = UDim2.new(1, -28, 0, 28); modeField.Position = UDim2.new(0, 14, 0, 10); modeField.BackgroundColor3 = Color3.fromRGB(248, 248, 248); modeField.Text = "  Mode - Velocity"; modeField.Font = Enum.Font.GothamMedium; modeField.TextSize = 12; modeField.TextColor3 = Color3.fromRGB(100, 100, 100); modeField.TextXAlignment = Enum.TextXAlignment.Left; modeField.ZIndex = 7; modeField.Parent = settingsDrawer
         Instance.new("UICorner", modeField).CornerRadius = UDim.new(0, 4)
