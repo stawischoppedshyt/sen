@@ -1,3 +1,4 @@
+-- Multi-Notification Stacking System & Auto-Loader Setup
 local UserInputService = game:GetService("UserInputService")
 local Lighting         = game:GetService("Lighting")
 local TweenService     = game:GetService("TweenService")
@@ -6,11 +7,35 @@ local RunService       = game:GetService("RunService")
 local HttpService      = game:GetService("HttpService")
 local LocalPlayer      = Players.LocalPlayer
 
-local localPath       = "sen_v4/logo.png"
-local blatantIconPath = "sen_v4/blatanticon.png"
-local utilityIconPath = "sen_v4/utilityicon.png"
+-- File Structure Configuration
+local folderName       = "sen_v4"
+local localPath       = folderName .. "/logo.png"
+local blatantIconPath = folderName .. "/blatanticon.png"
+local utilityIconPath = folderName .. "/utilityicon.png"
+local infoIconPath    = folderName .. "/info.png"
+local settingsFile    = folderName .. "/config.json"
 local dotsAssetId     = "rbxassetid://14368314459"
-local settingsFile    = "sen_v4/config.json"
+
+-- Automatically build directories if they do not exist
+if makefolder then pcall(function() makefolder(folderName) end) end
+
+-- Download missing files asynchronously
+local function downloadAsset(path, url)
+    if isfile and not isfile(path) then
+        pcall(function()
+            local success, content = pcall(function() return game:HttpGet(url) end)
+            if success and content then
+                writefile(path, content)
+            end
+        end)
+    end
+end
+
+-- Loader: Pull assets cleanly from repository
+downloadAsset(localPath, "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/logo.png")
+downloadAsset(blatantIconPath, "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/blatanticon.png")
+downloadAsset(utilityIconPath, "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/utilityicon.png")
+downloadAsset(infoIconPath, "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/info.png")
 
 -- Configuration Defaults & State Management
 local senSettings = {
@@ -22,11 +47,20 @@ local senSettings = {
     flyValue = 50,
     flyVerticalValue = 50,
     flyKeybind = "Unknown",
-    flyKeysMode = "Space/LeftControl" -- Options: "Space/LeftControl", "Q/E", "Z/C"
+    flyKeysMode = "Space/LeftControl",
+
+    phaseEnabled = false,
+    phaseKeybind = "Unknown",
+    phaseMode = "Standard",
+
+    spiderEnabled = false,
+    spiderValue = 30,
+    spiderKeybind = "Unknown",
+    spiderAnimEnabled = true
 }
 
--- Load saved user choices if they exist
-if isfile(settingsFile) then
+-- Load saved configuration
+if isfile and isfile(settingsFile) then
     local dataSuccess, parsed = pcall(function() return HttpService:JSONDecode(readfile(settingsFile)) end)
     if dataSuccess and type(parsed) == "table" then
         for k, v in pairs(parsed) do senSettings[k] = v end
@@ -34,12 +68,14 @@ if isfile(settingsFile) then
 end
 
 local function saveCurrentSettings()
-    pcall(function()
-        writefile(settingsFile, HttpService:JSONEncode(senSettings))
-    end)
+    if writefile then
+        pcall(function()
+            writefile(settingsFile, HttpService:JSONEncode(senSettings))
+        end)
+    end
 end
 
-if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and getcustomasset then
+if getcustomasset then
     -- Core UI Layout Construction
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "SenV4Menu"; screenGui.ResetOnSpawn = false; screenGui.Parent = game:GetService("CoreGui") 
@@ -85,7 +121,7 @@ if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and
     local subDivider = divider:Clone(); subDivider.Parent = subHeader
 
     local subContainerList = Instance.new("ScrollingFrame")
-    subContainerList.Name = "SubContainerList"; subContainerList.Size = UDim2.new(1, 0, 1, -43); subContainerList.Position = UDim2.new(0, 0, 0, 43); subContainerList.BackgroundTransparency = 1; subContainerList.BorderSizePixel = 0; subContainerList.ScrollBarThickness = 0; subContainerList.CanvasSize = UDim2.new(0, 0, 0, 400); subContainerList.ZIndex = 5; subContainerList.Parent = subMenuFrame
+    subContainerList.Name = "SubContainerList"; subContainerList.Size = UDim2.new(1, 0, 1, -43); subContainerList.Position = UDim2.new(0, 0, 0, 43); subContainerList.BackgroundTransparency = 1; subContainerList.BorderSizePixel = 0; subContainerList.ScrollBarThickness = 0; subContainerList.CanvasSize = UDim2.new(0, 0, 0, 500); subContainerList.ZIndex = 5; subContainerList.Parent = subMenuFrame
 
     local subUiListLayout = Instance.new("UIListLayout"); subUiListLayout.Parent = subContainerList; subUiListLayout.SortOrder = Enum.SortOrder.LayoutOrder; subUiListLayout.Padding = UDim.new(0, 2)
     subUiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() subContainerList.CanvasSize = UDim2.new(0, 0, 0, subUiListLayout.AbsoluteContentSize.Y + 20) end)
@@ -123,6 +159,67 @@ if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and
     end
     makeDraggable(mainFrame); makeDraggable(subMenuFrame)
 
+    -- Dynamic Upward Stacking Notification System (Transparent Pure White)
+    local activeNotifications = {}
+    local notificationHeight = 58
+    local notificationSpacing = 8
+    local baseOffset = -75
+
+    local function repositionNotifications()
+        for index, frame in ipairs(activeNotifications) do
+            local targetYOffset = baseOffset - ((index - 1) * (notificationHeight + notificationSpacing))
+            TweenService:Create(frame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Position = UDim2.new(1, -265, 1, targetYOffset)
+            }):Play()
+        end
+    end
+
+    local function createNotification(title, message)
+        local notifyFrame = Instance.new("Frame")
+        notifyFrame.Name = "NotificationFrame"; notifyFrame.Size = UDim2.new(0, 245, 0, notificationHeight); notifyFrame.Position = UDim2.new(1, 30, 1, baseOffset)
+        notifyFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255); notifyFrame.BackgroundTransparency = 0.25; notifyFrame.BorderSizePixel = 0; notifyFrame.ClipsDescendants = true; notifyFrame.Parent = screenGui
+
+        local notifyCorner = Instance.new("UICorner"); notifyCorner.CornerRadius = UDim.new(0, 6); notifyCorner.Parent = notifyFrame
+        local notifyStroke = Instance.new("UIStroke"); notifyStroke.Thickness = 1; notifyStroke.Color = Color3.fromRGB(220, 220, 220); notifyStroke.Transparency = 0.3; notifyStroke.Parent = notifyFrame
+        local notifyShadow = shadowGlow:Clone(); notifyShadow.ImageTransparency = 0.85; notifyShadow.Parent = notifyFrame
+
+        table.insert(activeNotifications, 1, notifyFrame)
+        repositionNotifications()
+
+        -- Custom info icon styled nicely on the white background
+        local infoIcon = Instance.new("ImageLabel")
+        infoIcon.Name = "InfoIcon"; infoIcon.Size = UDim2.new(0, 14, 0, 14); infoIcon.Position = UDim2.new(1, -22, 0, 10); infoIcon.BackgroundTransparency = 1
+        infoIcon.Image = getcustomasset(infoIconPath); infoIcon.ImageColor3 = Color3.fromRGB(60, 60, 60); infoIcon.Parent = notifyFrame
+
+        local headerTxt = Instance.new("TextLabel")
+        headerTxt.Name = "HeaderText"; headerTxt.Size = UDim2.new(1, -50, 0, 18); headerTxt.Position = UDim2.new(0, 14, 0, 8); headerTxt.BackgroundTransparency = 1; headerTxt.Text = title; headerTxt.TextColor3 = Color3.fromRGB(40, 40, 40); headerTxt.Font = Enum.Font.GothamBold; headerTxt.TextSize = 14; headerTxt.TextXAlignment = Enum.TextXAlignment.Left; headerTxt.Parent = notifyFrame
+
+        local bodyTxt = Instance.new("TextLabel")
+        bodyTxt.Name = "BodyText"; bodyTxt.Size = UDim2.new(1, -30, 0, 18); bodyTxt.Position = UDim2.new(0, 14, 0, 26); bodyTxt.BackgroundTransparency = 1; bodyTxt.Text = message; bodyTxt.TextColor3 = Color3.fromRGB(80, 80, 80); bodyTxt.Font = Enum.Font.GothamMedium; bodyTxt.TextSize = 12; bodyTxt.TextXAlignment = Enum.TextXAlignment.Left; bodyTxt.Parent = notifyFrame
+
+        local countdownBarContainer = Instance.new("Frame")
+        countdownBarContainer.Name = "CountdownContainer"; countdownBarContainer.Size = UDim2.new(1, 0, 0, 3); countdownBarContainer.Position = UDim2.new(0, 0, 1, -3); countdownBarContainer.BackgroundTransparency = 1; countdownBarContainer.BorderSizePixel = 0; countdownBarContainer.Parent = notifyFrame
+
+        local countdownFill = Instance.new("Frame")
+        countdownFill.Name = "CountdownFill"; countdownFill.Size = UDim2.new(1, 0, 1, 0); countdownFill.BackgroundColor3 = accentColor; countdownFill.BackgroundTransparency = 0.1; countdownFill.BorderSizePixel = 0; countdownFill.Parent = countdownBarContainer
+
+        task.spawn(function()
+            task.wait(0.05)
+            local barTween = TweenService:Create(countdownFill, TweenInfo.new(3.0, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)})
+            barTween:Play()
+            barTween.Completed:Connect(function()
+                local positionIndex = table.find(activeNotifications, notifyFrame)
+                if positionIndex then table.remove(activeNotifications, positionIndex) end
+                
+                local currentPos = notifyFrame.Position
+                local closeTween = TweenService:Create(notifyFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(1, 30, currentPos.X.Scale, currentPos.Y.Offset)})
+                closeTween:Play()
+                repositionNotifications()
+                closeTween.Completed:Connect(function() notifyFrame:Destroy() end)
+            end)
+        end)
+    end
+
     local function refreshAllCategories()
         for catName, rowData in pairs(categoryRows) do
             if activeCategory == catName then
@@ -152,7 +249,26 @@ if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and
         row.MouseLeave:Connect(function() refreshAllCategories() end)
     end
 
-    -- ORIGINAL MODULE: Speed Component
+    local function setupBindLogic(settingsKey, bindBox)
+        local listening = false
+        bindBox.MouseButton1Click:Connect(function() listening = true; bindBox.Text = "..." end)
+        UserInputService.InputBegan:Connect(function(input)
+            if listening and input.UserInputType == Enum.UserInputType.Keyboard then
+                listening = false
+                if input.KeyCode == Enum.KeyCode.Escape then
+                    senSettings[settingsKey] = "Unknown"
+                else
+                    senSettings[settingsKey] = input.KeyCode.Name
+                end
+                local displayName = senSettings[settingsKey] == "Unknown" and "-" or senSettings[settingsKey]:upper()
+                if #displayName > 3 then displayName = displayName:sub(1, 3) end
+                bindBox.Text = displayName
+                saveCurrentSettings()
+            end
+        end)
+    end
+
+    -- 1. SPEED MODULE
     local function createSpeedModule(targetParent)
         local moduleContainer = Instance.new("Frame")
         moduleContainer.Name = "SpeedModuleContainer"; moduleContainer.Size = UDim2.new(1, 0, 0, 40); moduleContainer.BackgroundTransparency = 1; moduleContainer.ClipsDescendants = true; moduleContainer.ZIndex = 6; moduleContainer.LayoutOrder = 1; moduleContainer.Parent = targetParent
@@ -167,40 +283,22 @@ if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and
         settingsDrawer.Name = "SettingsDrawer"; settingsDrawer.Size = UDim2.new(1, 0, 0, 110); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BackgroundColor3 = Color3.fromRGB(238, 238, 238); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
 
         local isDrawerOpen = false
-        local function updateContainerHeight()
-            local targetHeight = isDrawerOpen and 150 or 40
-            TweenService:Create(moduleContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(1, 0, 0, targetHeight)}):Play()
-        end
-
         local dotsButton = Instance.new("ImageButton")
         dotsButton.Name = "DotsButton"; dotsButton.Size = UDim2.new(0, 16, 0, 16); dotsButton.Position = UDim2.new(1, -24, 0.5, 0); dotsButton.AnchorPoint = Vector2.new(0, 0.5); dotsButton.BackgroundTransparency = 1; dotsButton.Image = dotsAssetId; dotsButton.ScaleType = Enum.ScaleType.Fit; dotsButton.ImageColor3 = Color3.fromRGB(140, 140, 140); dotsButton.ZIndex = 7; dotsButton.Parent = mainButton
-        dotsButton.MouseButton1Click:Connect(function() isDrawerOpen = not isDrawerOpen; updateContainerHeight() end)
+        dotsButton.MouseButton1Click:Connect(function() isDrawerOpen = not isDrawerOpen; TweenService:Create(moduleContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(1, 0, 0, isDrawerOpen and 150 or 40)}):Play() end)
 
         local bindBox = Instance.new("TextButton")
-        bindBox.Name = "BindBox"; bindBox.Size = UDim2.new(0, 24, 0, 18); bindBox.Position = UDim2.new(1, -58, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.BackgroundColor3 = Color3.fromRGB(248, 248, 248); bindBox.Text = senSettings.speedKeybind == "Unknown" and "-" or senSettings.speedKeybind:upper(); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 11; bindBox.TextColor3 = Color3.fromRGB(140, 140, 140); bindBox.ZIndex = 7; bindBox.Parent = mainButton
+        bindBox.Name = "BindBox"; bindBox.Size = UDim2.new(0, 26, 0, 18); bindBox.Position = UDim2.new(1, -56, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.BackgroundColor3 = Color3.fromRGB(248, 248, 248); bindBox.Text = senSettings.speedKeybind == "Unknown" and "-" or senSettings.speedKeybind:upper():sub(1,3); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 10; bindBox.TextColor3 = Color3.fromRGB(140, 140, 140); bindBox.ZIndex = 7; bindBox.Parent = mainButton
         Instance.new("UICorner", bindBox).CornerRadius = UDim.new(0, 4)
+        setupBindLogic("speedKeybind", bindBox)
 
-        local listeningForKey = false
-        bindBox.MouseButton1Click:Connect(function() listeningForKey = true; bindBox.Text = "..." end)
-        UserInputService.InputBegan:Connect(function(input)
-            if listeningForKey and input.UserInputType == Enum.UserInputType.Keyboard then
-                listeningForKey = false
-                if input.KeyCode == Enum.KeyCode.Escape then
-                    senSettings.speedKeybind = "Unknown"
-                else
-                    senSettings.speedKeybind = input.KeyCode.Name
-                end
-                bindBox.Text = (senSettings.speedKeybind == "Unknown") and "-" or senSettings.speedKeybind:upper():sub(1,3)
-                saveCurrentSettings()
-            end
-        end)
-
-        local function toggleSpeedState(silent)
-            if not silent then senSettings.speedEnabled = not senSettings.speedEnabled end
+        local function toggleSpeedState()
+            senSettings.speedEnabled = not senSettings.speedEnabled
             TweenService:Create(titleLabel, tweenInfo, {TextColor3 = senSettings.speedEnabled and accentColor or idleMainColor}):Play()
+            createNotification("Speed Mode", "Feature has been " .. (senSettings.speedEnabled and "Enabled" or "Disabled"))
             saveCurrentSettings()
         end
-        mainButton.MouseButton1Click:Connect(function() toggleSpeedState(false) end)
+        mainButton.MouseButton1Click:Connect(toggleSpeedState)
 
         local modeField = Instance.new("TextLabel")
         modeField.Size = UDim2.new(1, -28, 0, 28); modeField.Position = UDim2.new(0, 14, 0, 10); modeField.BackgroundColor3 = Color3.fromRGB(248, 248, 248); modeField.Text = "  Mode - Velocity"; modeField.Font = Enum.Font.GothamMedium; modeField.TextSize = 12; modeField.TextColor3 = Color3.fromRGB(100, 100, 100); modeField.TextXAlignment = Enum.TextXAlignment.Left; modeField.ZIndex = 7; modeField.Parent = settingsDrawer
@@ -228,24 +326,24 @@ if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and
         local sliderKnob = Instance.new("ImageButton")
         sliderKnob.Size = UDim2.new(0, 13, 0, 13); sliderKnob.Position = UDim2.new(currentScale, 0, 0.5, 0); sliderKnob.AnchorPoint = Vector2.new(0.5, 0.5); sliderKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); sliderKnob.ZIndex = 9; sliderKnob.Parent = sliderTrack
         Instance.new("UICorner", sliderKnob).CornerRadius = UDim.new(1, 0)
-        local knobStroke = Instance.new("UIStroke", sliderKnob); knobStroke.Thickness = 2; knobStroke.Color = accentColor; knobStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
         local isDragging = false
-        local function updateSlider(input)
-            local relativeX = math.clamp((input.Position.X - sliderTrack.AbsolutePosition.X) / sliderTrack.AbsoluteSize.X, 0, 1)
-            sliderFill.Size = UDim2.new(relativeX, 0, 1, 0); sliderKnob.Position = UDim2.new(relativeX, 0, 0.5, 0)
-            senSettings.speedValue = math.round(1 + (relativeX * 149))
-            valueLabel.Text = tostring(senSettings.speedValue) .. " studs"
-            saveCurrentSettings()
-        end
         sliderKnob.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = true end end)
         UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = false end end)
-        UserInputService.InputChanged:Connect(function(input) if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then updateSlider(input) end end)
+        UserInputService.InputChanged:Connect(function(input) 
+            if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then 
+                local relativeX = math.clamp((input.Position.X - sliderTrack.AbsolutePosition.X) / sliderTrack.AbsoluteSize.X, 0, 1)
+                sliderFill.Size = UDim2.new(relativeX, 0, 1, 0); sliderKnob.Position = UDim2.new(relativeX, 0, 0.5, 0)
+                senSettings.speedValue = math.round(1 + (relativeX * 149))
+                valueLabel.Text = tostring(senSettings.speedValue) .. " studs"
+                saveCurrentSettings()
+            end 
+        end)
 
-        return function() toggleSpeedState(false) end
+        return toggleSpeedState
     end
 
-    -- NEW MODULE: Fly Component (Controls horizontal speed and separate vertical flight speed via root velocity)
+    -- 2. FLY MODULE
     local function createFlyModule(targetParent)
         local moduleContainer = Instance.new("Frame")
         moduleContainer.Name = "FlyModuleContainer"; moduleContainer.Size = UDim2.new(1, 0, 0, 40); moduleContainer.BackgroundTransparency = 1; moduleContainer.ClipsDescendants = true; moduleContainer.ZIndex = 6; moduleContainer.LayoutOrder = 2; moduleContainer.Parent = targetParent
@@ -254,48 +352,29 @@ if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and
         mainButton.Name = "MainButton"; mainButton.Size = UDim2.new(1, 0, 0, 40); mainButton.BackgroundTransparency = 1; mainButton.Text = ""; mainButton.ZIndex = 6; mainButton.Parent = moduleContainer
 
         local titleLabel = Instance.new("TextLabel")
-        titleLabel.Name = "Title"; titleLabel.Size = UDim2.new(1, -100, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Fly"; titleLabel.TextColor3 = senSettings.flyEnabled and accentColor or idleMainColor; titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
+        titleLabel.Name = "Title"; titleLabel.Size = UDim2.new(1, -110, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Fly"; titleLabel.TextColor3 = senSettings.flyEnabled and accentColor or idleMainColor; titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
 
         local settingsDrawer = Instance.new("Frame")
-        settingsDrawer.Name = "SettingsDrawer"; settingsDrawer.Size = UDim2.new(1, 0, 0, 185); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BackgroundColor3 = Color3.fromRGB(238, 238, 238); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
+        settingsDrawer.Name = "SettingsDrawer"; settingsDrawer.Size = UDim2.new(1, 0, 0, 145); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BackgroundColor3 = Color3.fromRGB(238, 238, 238); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
 
         local isDrawerOpen = false
-        local function updateContainerHeight()
-            local targetHeight = isDrawerOpen and 225 or 40
-            TweenService:Create(moduleContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(1, 0, 0, targetHeight)}):Play()
-        end
-
         local dotsButton = Instance.new("ImageButton")
         dotsButton.Name = "DotsButton"; dotsButton.Size = UDim2.new(0, 16, 0, 16); dotsButton.Position = UDim2.new(1, -24, 0.5, 0); dotsButton.AnchorPoint = Vector2.new(0, 0.5); dotsButton.BackgroundTransparency = 1; dotsButton.Image = dotsAssetId; dotsButton.ScaleType = Enum.ScaleType.Fit; dotsButton.ImageColor3 = Color3.fromRGB(140, 140, 140); dotsButton.ZIndex = 7; dotsButton.Parent = mainButton
-        dotsButton.MouseButton1Click:Connect(function() isDrawerOpen = not isDrawerOpen; updateContainerHeight() end)
+        dotsButton.MouseButton1Click:Connect(function() isDrawerOpen = not isDrawerOpen; TweenService:Create(moduleContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(1, 0, 0, isDrawerOpen and 185 or 40)}):Play() end)
 
         local bindBox = Instance.new("TextButton")
-        bindBox.Name = "BindBox"; bindBox.Size = UDim2.new(0, 24, 0, 18); bindBox.Position = UDim2.new(1, -58, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.BackgroundColor3 = Color3.fromRGB(248, 248, 248); bindBox.Text = senSettings.flyKeybind == "Unknown" and "-" or senSettings.flyKeybind:upper(); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 11; bindBox.TextColor3 = Color3.fromRGB(140, 140, 140); bindBox.ZIndex = 7; bindBox.Parent = mainButton
+        bindBox.Name = "BindBox"; bindBox.Size = UDim2.new(0, 26, 0, 18); bindBox.Position = UDim2.new(1, -56, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.BackgroundColor3 = Color3.fromRGB(248, 248, 248); bindBox.Text = senSettings.flyKeybind == "Unknown" and "-" or senSettings.flyKeybind:upper():sub(1,3); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 10; bindBox.TextColor3 = Color3.fromRGB(140, 140, 140); bindBox.ZIndex = 7; bindBox.Parent = mainButton
         Instance.new("UICorner", bindBox).CornerRadius = UDim.new(0, 4)
+        setupBindLogic("flyKeybind", bindBox)
 
-        local listeningForKey = false
-        bindBox.MouseButton1Click:Connect(function() listeningForKey = true; bindBox.Text = "..." end)
-        UserInputService.InputBegan:Connect(function(input)
-            if listeningForKey and input.UserInputType == Enum.UserInputType.Keyboard then
-                listeningForKey = false
-                if input.KeyCode == Enum.KeyCode.Escape then
-                    senSettings.flyKeybind = "Unknown"
-                else
-                    senSettings.flyKeybind = input.KeyCode.Name
-                end
-                bindBox.Text = (senSettings.flyKeybind == "Unknown") and "-" or senSettings.flyKeybind:upper():sub(1,3)
-                saveCurrentSettings()
-            end
-        end)
-
-        local function toggleFlyState(silent)
-            if not silent then senSettings.flyEnabled = not senSettings.flyEnabled end
+        local function toggleFlyState()
+            senSettings.flyEnabled = not senSettings.flyEnabled
             TweenService:Create(titleLabel, tweenInfo, {TextColor3 = senSettings.flyEnabled and accentColor or idleMainColor}):Play()
+            createNotification("Fly Mode", "Feature has been " .. (senSettings.flyEnabled and "Enabled" or "Disabled"))
             saveCurrentSettings()
         end
-        mainButton.MouseButton1Click:Connect(function() toggleFlyState(false) end)
+        mainButton.MouseButton1Click:Connect(toggleFlyState)
 
-        -- Keys Custom Option Choice Box Dropdown Only
         local dropdownContainer = Instance.new("TextButton")
         dropdownContainer.Size = UDim2.new(1, -28, 0, 28); dropdownContainer.Position = UDim2.new(0, 14, 0, 10); dropdownContainer.BackgroundColor3 = Color3.fromRGB(248, 248, 248); dropdownContainer.Text = "  Keys - " .. senSettings.flyKeysMode; dropdownContainer.Font = Enum.Font.GothamMedium; dropdownContainer.TextSize = 12; dropdownContainer.TextColor3 = Color3.fromRGB(100, 100, 100); dropdownContainer.TextXAlignment = Enum.TextXAlignment.Left; dropdownContainer.ZIndex = 7; dropdownContainer.Parent = settingsDrawer
         Instance.new("UICorner", dropdownContainer).CornerRadius = UDim.new(0, 4)
@@ -309,120 +388,265 @@ if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and
         local listUi = Instance.new("UIListLayout"); listUi.Parent = dropdownListFrame
 
         local dropdownOpen = false
-        dropdownContainer.MouseButton1Click:Connect(function()
-            dropdownOpen = not dropdownOpen
-            dropdownListFrame.Visible = dropdownOpen
-            dropdownArrow.Rotation = dropdownOpen and 180 or 0
-        end)
+        dropdownContainer.MouseButton1Click:Connect(function() dropdownOpen = not dropdownOpen; dropdownListFrame.Visible = dropdownOpen; dropdownArrow.Rotation = dropdownOpen and 180 or 0 end)
 
         local availableModes = {"Space/LeftControl", "Q/E", "Z/C"}
         for _, modeName in ipairs(availableModes) do
             local optionBtn = Instance.new("TextButton")
             optionBtn.Size = UDim2.new(1, 0, 0, 25); optionBtn.BackgroundTransparency = 1; optionBtn.Text = "  " .. modeName; optionBtn.Font = Enum.Font.GothamMedium; optionBtn.TextSize = 11; optionBtn.TextColor3 = Color3.fromRGB(120, 120, 120); optionBtn.TextXAlignment = Enum.TextXAlignment.Left; optionBtn.ZIndex = 11; optionBtn.Parent = dropdownListFrame
-            
             optionBtn.MouseButton1Click:Connect(function()
                 senSettings.flyKeysMode = modeName
                 dropdownContainer.Text = "  Keys - " .. modeName
-                dropdownOpen = false
-                dropdownListFrame.Visible = false
-                dropdownArrow.Rotation = 0
+                dropdownOpen = false; dropdownListFrame.Visible = false; dropdownArrow.Rotation = 0
                 saveCurrentSettings()
             end)
         end
 
-        -- Horizontal Flight Speed Slider
         local horizLabel = Instance.new("TextLabel")
-        horizLabel.Size = UDim2.new(0, 100, 0, 15); horizLabel.Position = UDim2.new(0, 14, 0, 52); horizLabel.BackgroundTransparency = 1; horizLabel.Text = "Flight Speed"; horizLabel.Font = Enum.Font.GothamMedium; horizLabel.TextSize = 11; horizLabel.TextColor3 = Color3.fromRGB(60, 60, 60); horizLabel.TextXAlignment = Enum.TextXAlignment.Left; horizLabel.ZIndex = 7; horizLabel.Parent = settingsDrawer
-
+        horizLabel.Size = UDim2.new(0, 100, 0, 15); horizLabel.Position = UDim2.new(0, 14, 0, 48); horizLabel.BackgroundTransparency = 1; horizLabel.Text = "Flight Speed"; horizLabel.Font = Enum.Font.GothamMedium; horizLabel.TextSize = 11; horizLabel.TextColor3 = Color3.fromRGB(60, 60, 60); horizLabel.TextXAlignment = Enum.TextXAlignment.Left; horizLabel.ZIndex = 7; horizLabel.Parent = settingsDrawer
+        
         local horizValLabel = Instance.new("TextLabel")
-        horizValLabel.Size = UDim2.new(0, 60, 0, 15); horizValLabel.Position = UDim2.new(1, -74, 0, 52); horizValLabel.BackgroundTransparency = 1; horizValLabel.Text = tostring(senSettings.flyValue) .. " studs"; horizValLabel.Font = Enum.Font.GothamMedium; horizValLabel.TextSize = 11; horizValLabel.TextColor3 = Color3.fromRGB(60, 60, 60); horizValLabel.TextXAlignment = Enum.TextXAlignment.Right; horizValLabel.ZIndex = 7; horizValLabel.Parent = settingsDrawer
+        horizValLabel.Size = UDim2.new(0, 60, 0, 15); horizValLabel.Position = UDim2.new(1, -74, 0, 48); horizValLabel.BackgroundTransparency = 1; horizValLabel.Text = tostring(senSettings.flyValue) .. " studs"; horizValLabel.Font = Enum.Font.GothamMedium; horizValLabel.TextSize = 11; horizValLabel.TextColor3 = Color3.fromRGB(60, 60, 60); horizValLabel.TextXAlignment = Enum.TextXAlignment.Right; horizValLabel.ZIndex = 7; horizValLabel.Parent = settingsDrawer
 
         local horizTrack = Instance.new("Frame")
-        horizTrack.Size = UDim2.new(1, -28, 0, 5); horizTrack.Position = UDim2.new(0, 14, 0, 72); horizTrack.BackgroundColor3 = Color3.fromRGB(215, 215, 215); horizTrack.BorderSizePixel = 0; horizTrack.ZIndex = 7; horizTrack.Parent = settingsDrawer
+        horizTrack.Size = UDim2.new(1, -28, 0, 5); horizTrack.Position = UDim2.new(0, 14, 0, 66); horizTrack.BackgroundColor3 = Color3.fromRGB(215, 215, 215); horizTrack.BorderSizePixel = 0; horizTrack.ZIndex = 7; horizTrack.Parent = settingsDrawer
         Instance.new("UICorner", horizTrack).CornerRadius = UDim.new(0, 2)
 
         local initialHorizScale = math.clamp((senSettings.flyValue - 1) / 149, 0, 1)
         local horizFill = Instance.new("Frame")
-        horizFill.Size = UDim2.new(initialHorizScale, 0, 1, 0); horizFill.BackgroundColor3 = accentColor; horizFill.BorderSizePixel = 0; horizFill.ZIndex = 8; horizFill.Parent = horizTrack
+        horizFill.Size = UDim2.new(initialHorizScale, 0, 1, 0); horizFill.BackgroundColor3 = accentColor; horizFill.Parent = horizTrack
         Instance.new("UICorner", horizFill).CornerRadius = UDim.new(0, 2)
 
         local horizKnob = Instance.new("ImageButton")
         horizKnob.Size = UDim2.new(0, 13, 0, 13); horizKnob.Position = UDim2.new(initialHorizScale, 0, 0.5, 0); horizKnob.AnchorPoint = Vector2.new(0.5, 0.5); horizKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); horizKnob.ZIndex = 9; horizKnob.Parent = horizTrack
         Instance.new("UICorner", horizKnob).CornerRadius = UDim.new(1, 0)
-        local hStroke = Instance.new("UIStroke", horizKnob); hStroke.Thickness = 2; hStroke.Color = accentColor; hStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
         local dragHoriz = false
-        local function updateHoriz(input)
-            local relativeX = math.clamp((input.Position.X - horizTrack.AbsolutePosition.X) / horizTrack.AbsoluteSize.X, 0, 1)
-            horizFill.Size = UDim2.new(relativeX, 0, 1, 0); horizKnob.Position = UDim2.new(relativeX, 0, 0.5, 0)
-            senSettings.flyValue = math.round(1 + (relativeX * 149))
-            horizValLabel.Text = tostring(senSettings.flyValue) .. " studs"
-            saveCurrentSettings()
-        end
         horizKnob.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragHoriz = true end end)
         UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragHoriz = false end end)
-        UserInputService.InputChanged:Connect(function(input) if dragHoriz and input.UserInputType == Enum.UserInputType.MouseMovement then updateHoriz(input) end end)
+        UserInputService.InputChanged:Connect(function(input)
+            if dragHoriz and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local relativeX = math.clamp((input.Position.X - horizTrack.AbsolutePosition.X) / horizTrack.AbsoluteSize.X, 0, 1)
+                horizFill.Size = UDim2.new(relativeX, 0, 1, 0); horizKnob.Position = UDim2.new(relativeX, 0, 0.5, 0)
+                senSettings.flyValue = math.round(1 + (relativeX * 149))
+                horizValLabel.Text = tostring(senSettings.flyValue) .. " studs"
+                saveCurrentSettings()
+            end
+        end)
 
-        -- Vertical Flight Speed Slider
         local vertLabel = Instance.new("TextLabel")
-        vertLabel.Size = UDim2.new(0, 100, 0, 15); vertLabel.Position = UDim2.new(0, 14, 0, 92); vertLabel.BackgroundTransparency = 1; vertLabel.Text = "Vertical Speed"; vertLabel.Font = Enum.Font.GothamMedium; vertLabel.TextSize = 11; vertLabel.TextColor3 = Color3.fromRGB(60, 60, 60); vertLabel.TextXAlignment = Enum.TextXAlignment.Left; vertLabel.ZIndex = 7; vertLabel.Parent = settingsDrawer
-
+        vertLabel.Size = UDim2.new(0, 100, 0, 15); vertLabel.Position = UDim2.new(0, 14, 0, 80); vertLabel.BackgroundTransparency = 1; vertLabel.Text = "Vertical Speed"; vertLabel.Font = Enum.Font.GothamMedium; vertLabel.TextSize = 11; vertLabel.TextColor3 = Color3.fromRGB(60, 60, 60); vertLabel.TextXAlignment = Enum.TextXAlignment.Left; vertLabel.ZIndex = 7; vertLabel.Parent = settingsDrawer
+        
         local vertValLabel = Instance.new("TextLabel")
-        vertValLabel.Size = UDim2.new(0, 60, 0, 15); vertValLabel.Position = UDim2.new(1, -74, 0, 92); vertValLabel.BackgroundTransparency = 1; vertValLabel.Text = tostring(senSettings.flyVerticalValue) .. " studs"; vertValLabel.Font = Enum.Font.GothamMedium; vertValLabel.TextSize = 11; vertValLabel.TextColor3 = Color3.fromRGB(60, 60, 60); vertValLabel.TextXAlignment = Enum.TextXAlignment.Right; vertValLabel.ZIndex = 7; vertValLabel.Parent = settingsDrawer
+        vertValLabel.Size = UDim2.new(0, 60, 0, 15); vertValLabel.Position = UDim2.new(1, -74, 0, 80); vertValLabel.BackgroundTransparency = 1; vertValLabel.Text = tostring(senSettings.flyVerticalValue) .. " studs"; vertValLabel.Font = Enum.Font.GothamMedium; vertValLabel.TextSize = 11; vertValLabel.TextColor3 = Color3.fromRGB(60, 60, 60); vertValLabel.TextXAlignment = Enum.TextXAlignment.Right; vertValLabel.ZIndex = 7; vertValLabel.Parent = settingsDrawer
 
         local vertTrack = Instance.new("Frame")
-        vertTrack.Size = UDim2.new(1, -28, 0, 5); vertTrack.Position = UDim2.new(0, 14, 0, 112); vertTrack.BackgroundColor3 = Color3.fromRGB(215, 215, 215); vertTrack.BorderSizePixel = 0; vertTrack.ZIndex = 7; vertTrack.Parent = settingsDrawer
+        vertTrack.Size = UDim2.new(1, -28, 0, 5); vertTrack.Position = UDim2.new(0, 14, 0, 98); vertTrack.BackgroundColor3 = Color3.fromRGB(215, 215, 215); vertTrack.BorderSizePixel = 0; vertTrack.ZIndex = 7; vertTrack.Parent = settingsDrawer
         Instance.new("UICorner", vertTrack).CornerRadius = UDim.new(0, 2)
 
         local initialVertScale = math.clamp((senSettings.flyVerticalValue - 1) / 149, 0, 1)
         local vertFill = Instance.new("Frame")
-        vertFill.Size = UDim2.new(initialVertScale, 0, 1, 0); vertFill.BackgroundColor3 = accentColor; vertFill.BorderSizePixel = 0; vertFill.ZIndex = 8; vertFill.Parent = vertTrack
+        vertFill.Size = UDim2.new(initialVertScale, 0, 1, 0); vertFill.BackgroundColor3 = accentColor; vertFill.Parent = vertTrack
         Instance.new("UICorner", vertFill).CornerRadius = UDim.new(0, 2)
 
         local vertKnob = Instance.new("ImageButton")
         vertKnob.Size = UDim2.new(0, 13, 0, 13); vertKnob.Position = UDim2.new(initialVertScale, 0, 0.5, 0); vertKnob.AnchorPoint = Vector2.new(0.5, 0.5); vertKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); vertKnob.ZIndex = 9; vertKnob.Parent = vertTrack
         Instance.new("UICorner", vertKnob).CornerRadius = UDim.new(1, 0)
-        local vStroke = Instance.new("UIStroke", vertKnob); vStroke.Thickness = 2; vStroke.Color = accentColor; vStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
         local dragVert = false
-        local function updateVert(input)
-            local relativeX = math.clamp((input.Position.X - vertTrack.AbsolutePosition.X) / vertTrack.AbsoluteSize.X, 0, 1)
-            vertFill.Size = UDim2.new(relativeX, 0, 1, 0); vertKnob.Position = UDim2.new(relativeX, 0, 0.5, 0)
-            senSettings.flyVerticalValue = math.round(1 + (relativeX * 149))
-            vertValLabel.Text = tostring(senSettings.flyVerticalValue) .. " studs"
-            saveCurrentSettings()
-        end
         vertKnob.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragVert = true end end)
         UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragVert = false end end)
-        UserInputService.InputChanged:Connect(function(input) if dragVert and input.UserInputType == Enum.UserInputType.MouseMovement then updateVert(input) end end)
+        UserInputService.InputChanged:Connect(function(input)
+            if dragVert and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local relativeX = math.clamp((input.Position.X - vertTrack.AbsolutePosition.X) / vertTrack.AbsoluteSize.X, 0, 1)
+                vertFill.Size = UDim2.new(relativeX, 0, 1, 0); vertKnob.Position = UDim2.new(relativeX, 0, 0.5, 0)
+                senSettings.flyVerticalValue = math.round(1 + (relativeX * 149))
+                vertValLabel.Text = tostring(senSettings.flyVerticalValue) .. " studs"
+                saveCurrentSettings()
+            end
+        end)
 
-        return function() toggleFlyState(false) end
+        return toggleFlyState
     end
 
-    local triggerSpeedToggle = createSpeedModule(subContainerList)
-    local triggerFlyToggle = createFlyModule(subContainerList)
+    -- 3. PHASE MODULE
+    local function createPhaseModule(targetParent)
+        local moduleContainer = Instance.new("Frame")
+        moduleContainer.Name = "PhaseModuleContainer"; moduleContainer.Size = UDim2.new(1, 0, 0, 40); moduleContainer.BackgroundTransparency = 1; moduleContainer.ClipsDescendants = true; moduleContainer.ZIndex = 6; moduleContainer.LayoutOrder = 3; moduleContainer.Parent = targetParent
+
+        local mainButton = Instance.new("TextButton")
+        mainButton.Size = UDim2.new(1, 0, 0, 40); mainButton.BackgroundTransparency = 1; mainButton.Text = ""; mainButton.ZIndex = 6; mainButton.Parent = moduleContainer
+
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Size = UDim2.new(1, -110, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Phase"; titleLabel.TextColor3 = senSettings.phaseEnabled and accentColor or idleMainColor; titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
+
+        local settingsDrawer = Instance.new("Frame")
+        settingsDrawer.Size = UDim2.new(1, 0, 0, 110); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BackgroundColor3 = Color3.fromRGB(238, 238, 238); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
+
+        local isDrawerOpen = false
+        local dotsButton = Instance.new("ImageButton")
+        dotsButton.Size = UDim2.new(0, 16, 0, 16); dotsButton.Position = UDim2.new(1, -24, 0.5, 0); dotsButton.AnchorPoint = Vector2.new(0, 0.5); dotsButton.BackgroundTransparency = 1; dotsButton.Image = dotsAssetId; dotsButton.ScaleType = Enum.ScaleType.Fit; dotsButton.ImageColor3 = Color3.fromRGB(140, 140, 140); dotsButton.ZIndex = 7; dotsButton.Parent = mainButton
+        dotsButton.MouseButton1Click:Connect(function() isDrawerOpen = not isDrawerOpen; TweenService:Create(moduleContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(1, 0, 0, isDrawerOpen and 150 or 40)}):Play() end)
+
+        local bindBox = Instance.new("TextButton")
+        bindBox.Size = UDim2.new(0, 26, 0, 18); bindBox.Position = UDim2.new(1, -56, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.BackgroundColor3 = Color3.fromRGB(248, 248, 248); bindBox.Text = senSettings.phaseKeybind == "Unknown" and "-" or senSettings.phaseKeybind:upper():sub(1,3); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 10; bindBox.TextColor3 = Color3.fromRGB(140, 140, 140); bindBox.ZIndex = 7; bindBox.Parent = mainButton
+        Instance.new("UICorner", bindBox).CornerRadius = UDim.new(0, 4)
+        setupBindLogic("phaseKeybind", bindBox)
+
+        local function togglePhaseState()
+            senSettings.phaseEnabled = not senSettings.phaseEnabled
+            TweenService:Create(titleLabel, tweenInfo, {TextColor3 = senSettings.phaseEnabled and accentColor or idleMainColor}):Play()
+            createNotification("Phase Mode", "Feature has been " .. (senSettings.phaseEnabled and "Enabled" or "Disabled"))
+            saveCurrentSettings()
+        end
+        mainButton.MouseButton1Click:Connect(togglePhaseState)
+
+        local pDropdown = Instance.new("TextButton")
+        pDropdown.Size = UDim2.new(1, -28, 0, 28); pDropdown.Position = UDim2.new(0, 14, 0, 10); pDropdown.BackgroundColor3 = Color3.fromRGB(248, 248, 248); pDropdown.Text = "  Method - " .. senSettings.phaseMode; pDropdown.Font = Enum.Font.GothamMedium; pDropdown.TextSize = 12; pDropdown.TextColor3 = Color3.fromRGB(100, 100, 100); pDropdown.TextXAlignment = Enum.TextXAlignment.Left; pDropdown.ZIndex = 7; pDropdown.Parent = settingsDrawer
+        Instance.new("UICorner", pDropdown).CornerRadius = UDim.new(0, 4)
+
+        local arrow = Instance.new("ImageLabel")
+        arrow.Size = UDim2.new(0, 10, 0, 10); arrow.Position = UDim2.new(1, -18, 0.5, 0); arrow.AnchorPoint = Vector2.new(0, 0.5); arrow.BackgroundTransparency = 1; arrow.Image = "rbxassetid://6031094678"; arrow.ImageColor3 = Color3.fromRGB(140, 140, 140); arrow.ZIndex = 8; arrow.Parent = pDropdown
+
+        local pList = Instance.new("Frame")
+        pList.Size = UDim2.new(1, 0, 0, 50); pList.Position = UDim2.new(0, 0, 1, 2); pList.BackgroundColor3 = Color3.fromRGB(250, 250, 250); pList.Visible = false; pList.ZIndex = 10; pList.Parent = pDropdown
+        Instance.new("UICorner", pList).CornerRadius = UDim.new(0, 4)
+        local pUi = Instance.new("UIListLayout"); pUi.Parent = pList
+
+        local pOpen = false
+        pDropdown.MouseButton1Click:Connect(function() pOpen = not pOpen; pList.Visible = pOpen; arrow.Rotation = pOpen and 180 or 0 end)
+
+        for _, mName in ipairs({"Standard", "Semi-Solid"}) do
+            local opt = Instance.new("TextButton")
+            opt.Size = UDim2.new(1, 0, 0, 25); opt.BackgroundTransparency = 1; opt.Text = "  " .. mName; opt.Font = Enum.Font.GothamMedium; opt.TextSize = 11; opt.TextColor3 = Color3.fromRGB(120, 120, 120); opt.TextXAlignment = Enum.TextXAlignment.Left; opt.ZIndex = 11; opt.Parent = pList
+            opt.MouseButton1Click:Connect(function()
+                senSettings.phaseMode = mName
+                pDropdown.Text = "  Method - " .. mName
+                pOpen = false; pList.Visible = false; arrow.Rotation = 0
+                saveCurrentSettings()
+            end)
+        end
+
+        return togglePhaseState
+    end
+
+    -- 4. SPIDER MODULE
+    local function createSpiderModule(targetParent)
+        local moduleContainer = Instance.new("Frame")
+        moduleContainer.Name = "SpiderModuleContainer"; moduleContainer.Size = UDim2.new(1, 0, 0, 40); moduleContainer.BackgroundTransparency = 1; moduleContainer.ClipsDescendants = true; moduleContainer.ZIndex = 6; moduleContainer.LayoutOrder = 4; moduleContainer.Parent = targetParent
+
+        local mainButton = Instance.new("TextButton")
+        mainButton.Size = UDim2.new(1, 0, 0, 40); mainButton.BackgroundTransparency = 1; mainButton.Text = ""; mainButton.ZIndex = 6; mainButton.Parent = moduleContainer
+
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Size = UDim2.new(1, -110, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Spider"; titleLabel.TextColor3 = senSettings.spiderEnabled and accentColor or idleMainColor; titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
+
+        local settingsDrawer = Instance.new("Frame")
+        settingsDrawer.Size = UDim2.new(1, 0, 0, 95); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BackgroundColor3 = Color3.fromRGB(238, 238, 238); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
+
+        local isDrawerOpen = false
+        local dotsButton = Instance.new("ImageButton")
+        dotsButton.Name = "DotsButton"; dotsButton.Size = UDim2.new(0, 16, 0, 16); dotsButton.Position = UDim2.new(1, -24, 0.5, 0); dotsButton.AnchorPoint = Vector2.new(0, 0.5); dotsButton.BackgroundTransparency = 1; dotsButton.Image = dotsAssetId; dotsButton.ScaleType = Enum.ScaleType.Fit; dotsButton.ImageColor3 = Color3.fromRGB(140, 140, 140); dotsButton.ZIndex = 7; dotsButton.Parent = mainButton
+        dotsButton.MouseButton1Click:Connect(function() isDrawerOpen = not isDrawerOpen; TweenService:Create(moduleContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(1, 0, 0, isDrawerOpen and 135 or 40)}):Play() end)
+
+        local bindBox = Instance.new("TextButton")
+        bindBox.Size = UDim2.new(0, 26, 0, 18); bindBox.Position = UDim2.new(1, -56, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.BackgroundColor3 = Color3.fromRGB(248, 248, 248); bindBox.Text = senSettings.spiderKeybind == "Unknown" and "-" or senSettings.spiderKeybind:upper():sub(1,3); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 10; bindBox.TextColor3 = Color3.fromRGB(140, 140, 140); bindBox.ZIndex = 7; bindBox.Parent = mainButton
+        Instance.new("UICorner", bindBox).CornerRadius = UDim.new(0, 4)
+        setupBindLogic("spiderKeybind", bindBox)
+
+        local function toggleSpiderState()
+            senSettings.spiderEnabled = not senSettings.spiderEnabled
+            TweenService:Create(titleLabel, tweenInfo, {TextColor3 = senSettings.spiderEnabled and accentColor or idleMainColor}):Play()
+            createNotification("Spider Mode", "Feature has been " .. (senSettings.spiderEnabled and "Enabled" or "Disabled"))
+            saveCurrentSettings()
+        end
+        mainButton.MouseButton1Click:Connect(toggleSpiderState)
+
+        local animToggleBtn = Instance.new("TextButton")
+        animToggleBtn.Size = UDim2.new(1, -28, 0, 28); animToggleBtn.Position = UDim2.new(0, 14, 0, 10); animToggleBtn.BackgroundColor3 = Color3.fromRGB(248, 248, 248); animToggleBtn.Text = "  Climbing Animation: " .. (senSettings.spiderAnimEnabled and "ON" or "OFF"); animToggleBtn.Font = Enum.Font.GothamMedium; animToggleBtn.TextSize = 12; animToggleBtn.TextColor3 = Color3.fromRGB(100, 100, 100); animToggleBtn.TextXAlignment = Enum.TextXAlignment.Left; animToggleBtn.ZIndex = 7; animToggleBtn.Parent = settingsDrawer
+        Instance.new("UICorner", animToggleBtn).CornerRadius = UDim.new(0, 4)
+        
+        animToggleBtn.MouseButton1Click:Connect(function()
+            senSettings.spiderAnimEnabled = not senSettings.spiderAnimEnabled
+            animToggleBtn.Text = "  Climbing Animation: " .. (senSettings.spiderAnimEnabled and "ON" or "OFF")
+            saveCurrentSettings()
+        end)
+
+        local speedLabel = Instance.new("TextLabel")
+        speedLabel.Size = UDim2.new(0, 100, 0, 15); speedLabel.Position = UDim2.new(0, 14, 0, 48); speedLabel.BackgroundTransparency = 1; speedLabel.Text = "Climb Speed"; speedLabel.Font = Enum.Font.GothamMedium; speedLabel.TextSize = 11; speedLabel.TextColor3 = Color3.fromRGB(60, 60, 60); speedLabel.TextXAlignment = Enum.TextXAlignment.Left; speedLabel.ZIndex = 7; speedLabel.Parent = settingsDrawer
+        
+        local speedValLabel = Instance.new("TextLabel")
+        speedValLabel.Size = UDim2.new(0, 60, 0, 15); speedValLabel.Position = UDim2.new(1, -74, 0, 48); speedValLabel.BackgroundTransparency = 1; speedValLabel.Text = tostring(senSettings.spiderValue) .. " studs"; speedValLabel.Font = Enum.Font.GothamMedium; speedValLabel.TextSize = 11; speedValLabel.TextColor3 = Color3.fromRGB(60, 60, 60); speedValLabel.TextXAlignment = Enum.TextXAlignment.Right; speedValLabel.ZIndex = 7; speedValLabel.Parent = settingsDrawer
+
+        local track = Instance.new("Frame")
+        track.Size = UDim2.new(1, -28, 0, 5); track.Position = UDim2.new(0, 14, 0, 66); track.BackgroundColor3 = Color3.fromRGB(215, 215, 215); track.BorderSizePixel = 0; track.ZIndex = 7; track.Parent = settingsDrawer
+        Instance.new("UICorner", track).CornerRadius = UDim.new(0, 2)
+
+        local initScale = math.clamp((senSettings.spiderValue - 1) / 149, 0, 1)
+        local fill = Instance.new("Frame")
+        fill.Size = UDim2.new(initScale, 0, 1, 0); fill.BackgroundColor3 = accentColor; fill.Parent = track
+        Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 2)
+
+        local knob = Instance.new("ImageButton")
+        knob.Size = UDim2.new(0, 13, 0, 13); knob.Position = UDim2.new(initScale, 0, 0.5, 0); knob.AnchorPoint = Vector2.new(0.5, 0.5); knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); knob.ZIndex = 9; knob.Parent = track
+        Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+        local dragging = false
+        knob.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
+        UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local relativeX = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+                fill.Size = UDim2.new(relativeX, 0, 1, 0); knob.Position = UDim2.new(relativeX, 0, 0.5, 0)
+                senSettings.spiderValue = math.round(1 + (relativeX * 149))
+                speedValLabel.Text = tostring(senSettings.spiderValue) .. " studs"
+                saveCurrentSettings()
+            end
+        end)
+
+        return toggleSpiderState
+    end
+
+    local triggerSpeedToggle  = createSpeedModule(subContainerList)
+    local triggerFlyToggle    = createFlyModule(subContainerList)
+    local triggerPhaseToggle  = createPhaseModule(subContainerList)
+    local triggerSpiderToggle = createSpiderModule(subContainerList)
 
     createCategoryRow("Blatant", "Blatant", blatantIconPath, 1, function() subMenuFrame.Visible = (activeCategory == "Blatant") end)
     createCategoryRow("Utility", "Utility", utilityIconPath, 2, function() subMenuFrame.Visible = false end)
 
-    -- Dynamic Movement Loops using Root Velocity Configuration
+    -- Runtime Modules Processing
     RunService.RenderStepped:Connect(function()
         local char = LocalPlayer.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         local hum = char and char:FindFirstChildWhichIsA("Humanoid")
         
         if root and hum then
-            -- 1. Handling basic speed modification loop
+            if senSettings.phaseEnabled then
+                if senSettings.phaseMode == "Standard" then
+                    for _, part in ipairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
+                    end
+                elseif senSettings.phaseMode == "Semi-Solid" then
+                    local params = RaycastParams.new()
+                    params.FilterDescendantsInstances = {char}; params.FilterType = Enum.RaycastFilterType.Exclude
+                    local moveDir = hum.MoveDirection
+                    if moveDir.Magnitude > 0 and workspace:Raycast(root.Position, moveDir * 2, params) then
+                        for _, part in ipairs(char:GetDescendants()) do
+                            if part:IsA("BasePart") then part.CanCollide = false end
+                        end
+                    end
+                end
+            end
+
             if senSettings.speedEnabled and not senSettings.flyEnabled then
                 local dir = hum.MoveDirection
                 root.Velocity = Vector3.new(dir.X * senSettings.speedValue, root.Velocity.Y, dir.Z * senSettings.speedValue)
             end
 
-            -- 2. Root velocity fly implementation tracking distinct horizontal/vertical bounds
             if senSettings.flyEnabled then
                 local dir = hum.MoveDirection
                 local flyY = 0
-
                 if senSettings.flyKeysMode == "Space/LeftControl" then
                     if UserInputService:IsKeyDown(Enum.KeyCode.Space) then flyY = senSettings.flyVerticalValue end
                     if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then flyY = -senSettings.flyVerticalValue end
@@ -433,21 +657,30 @@ if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and
                     if UserInputService:IsKeyDown(Enum.KeyCode.C) then flyY = senSettings.flyVerticalValue end
                     if UserInputService:IsKeyDown(Enum.KeyCode.Z) then flyY = -senSettings.flyVerticalValue end
                 end
-
                 root.Velocity = Vector3.new(dir.X * senSettings.flyValue, flyY, dir.Z * senSettings.flyValue)
+            end
+
+            if senSettings.spiderEnabled and not senSettings.flyEnabled then
+                local dir = hum.MoveDirection
+                if dir.Magnitude > 0 then
+                    local params = RaycastParams.new()
+                    params.FilterDescendantsInstances = {char}; params.FilterType = Enum.RaycastFilterType.Exclude
+                    if workspace:Raycast(root.Position, root.CFrame.LookVector * 2.5, params) then
+                        root.Velocity = Vector3.new(root.Velocity.X, senSettings.spiderValue, root.Velocity.Z)
+                        if senSettings.spiderAnimEnabled then hum:ChangeState(Enum.HumanoidStateType.Climbing) end
+                    end
+                end
             end
         end
     end)
 
-    -- Keybind Input Evaluation Mapping
+    -- Keybind Detection Loop
     UserInputService.InputBegan:Connect(function(input, processed)
         if not processed then
-            if senSettings.speedKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.speedKeybind then 
-                triggerSpeedToggle() 
-            end
-            if senSettings.flyKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.flyKeybind then 
-                triggerFlyToggle() 
-            end
+            if senSettings.speedKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.speedKeybind then triggerSpeedToggle() end
+            if senSettings.flyKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.flyKeybind then triggerFlyToggle() end
+            if senSettings.phaseKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.phaseKeybind then triggerPhaseToggle() end
+            if senSettings.spiderKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.spiderKeybind then triggerSpiderToggle() end
         end
     end)
 
@@ -459,44 +692,6 @@ if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and
         end
     end)
 
-    -- Interactive Loaded Notification Toast
-    local function createNotification()
-        local notifyFrame = Instance.new("Frame")
-        notifyFrame.Name = "NotificationFrame"; notifyFrame.Size = UDim2.new(0, 245, 0, 58); notifyFrame.Position = UDim2.new(1, 30, 1, -75); notifyFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255); notifyFrame.BackgroundTransparency = 0.35; notifyFrame.BorderSizePixel = 0; notifyFrame.ClipsDescendants = true; notifyFrame.Parent = screenGui
-
-        local notifyCorner = Instance.new("UICorner"); notifyCorner.CornerRadius = UDim.new(0, 6); notifyCorner.Parent = notifyFrame
-        local notifyStroke = Instance.new("UIStroke"); notifyStroke.Thickness = 1; notifyStroke.Color = Color3.fromRGB(230, 230, 230); notifyStroke.Transparency = 0.2; notifyStroke.Parent = notifyFrame
-        local notifyShadow = shadowGlow:Clone(); notifyShadow.ImageTransparency = 0.75; notifyShadow.Parent = notifyFrame
-
-        local notifyBlur = Instance.new("BlurEffect"); notifyBlur.Name = "NotificationBlur"; notifyBlur.Size = 12; notifyBlur.Enabled = true; notifyBlur.Parent = Lighting
-
-        local infoIcon = Instance.new("ImageLabel")
-        infoIcon.Name = "InfoIcon"; infoIcon.Size = UDim2.new(0, 18, 0, 18); infoIcon.Position = UDim2.new(0, 14, 0, 13); infoIcon.BackgroundTransparency = 1; infoIcon.Image = "rbxassetid://11419714349"; infoIcon.ImageColor3 = Color3.fromRGB(110, 110, 110); infoIcon.Parent = notifyFrame
-
-        local headerTxt = Instance.new("TextLabel")
-        headerTxt.Name = "HeaderText"; headerTxt.Size = UDim2.new(1, -50, 0, 18); headerTxt.Position = UDim2.new(0, 40, 0, 11); headerTxt.BackgroundTransparency = 1; headerTxt.Text = "Finished Loading"; headerTxt.TextColor3 = Color3.fromRGB(50, 50, 50); headerTxt.Font = Enum.Font.GothamBold; headerTxt.TextSize = 14; headerTxt.TextXAlignment = Enum.TextXAlignment.Left; headerTxt.Parent = notifyFrame
-
-        local bodyTxt = Instance.new("TextLabel")
-        bodyTxt.Name = "BodyText"; bodyTxt.Size = UDim2.new(1, -50, 0, 18); bodyTxt.Position = UDim2.new(0, 40, 0, 29); bodyTxt.BackgroundTransparency = 1; bodyTxt.Text = "Press RIGHTBRACKET to open GUI"; bodyTxt.TextColor3 = Color3.fromRGB(120, 120, 120); bodyTxt.Font = Enum.Font.GothamMedium; bodyTxt.TextSize = 12; bodyTxt.TextXAlignment = Enum.TextXAlignment.Left; bodyTxt.Parent = notifyFrame
-
-        local countdownBarContainer = Instance.new("Frame")
-        countdownBarContainer.Name = "CountdownContainer"; countdownBarContainer.Size = UDim2.new(1, 0, 0, 3); countdownBarContainer.Position = UDim2.new(0, 0, 1, -3); countdownBarContainer.BackgroundTransparency = 1; countdownBarContainer.BorderSizePixel = 0; countdownBarContainer.Parent = notifyFrame
-
-        local countdownFill = Instance.new("Frame")
-        countdownFill.Name = "CountdownFill"; countdownFill.Size = UDim2.new(1, 0, 1, 0); countdownFill.BackgroundColor3 = accentColor; countdownFill.BackgroundTransparency = 0.1; countdownFill.BorderSizePixel = 0; countdownFill.Parent = countdownBarContainer
-
-        task.spawn(function()
-            TweenService:Create(notifyFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(1, -265, 1, -75)}):Play()
-            task.wait(0.4)
-            local barTween = TweenService:Create(countdownFill, TweenInfo.new(3.5, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)})
-            barTween:Play()
-            barTween.Completed:Connect(function()
-                local closeTween = TweenService:Create(notifyFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(1, 30, 1, -75)})
-                closeTween:Play()
-                closeTween.Completed:Connect(function() notifyFrame:Destroy(); notifyBlur:Destroy() end)
-            end)
-        end)
-    end
-
-    createNotification()
+    -- First initialization load toast
+    createNotification("Finished Loading", "Press RIGHTBRACKET to toggle menu UI")
 end
