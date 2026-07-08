@@ -1,1 +1,285 @@
 
+local UserInputService = game:GetService("UserInputService")
+local Lighting         = game:GetService("Lighting")
+local TweenService     = game:GetService("TweenService")
+local Players          = game:GetService("Players")
+local RunService       = game:GetService("RunService")
+local LocalPlayer      = Players.LocalPlayer
+
+-- Local paths where assets were downloaded by the loader
+local localPath       = "sen_v4/logo.png"
+local blatantIconPath = "sen_v4/blatanticon.png"
+local utilityIconPath = "sen_v4/utilityicon.png"
+local dotsAssetId     = "rbxassetid://14368314459"
+
+if isfile(localPath) and isfile(blatantIconPath) and isfile(utilityIconPath) and getcustomasset then
+    -- Container Environment setup
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "SenV4Menu"; screenGui.ResetOnSpawn = false; screenGui.Parent = game:GetService("CoreGui") 
+    
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "MainFrame"; mainFrame.Size = UDim2.new(0, 225, 0, 450); mainFrame.Position = UDim2.new(0, 20, 0, 20)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255); mainFrame.BorderSizePixel = 0; mainFrame.ZIndex = 2; mainFrame.Parent = screenGui
+
+    local mainCorner = Instance.new("UICorner"); mainCorner.CornerRadius = UDim.new(0, 6); mainCorner.Parent = mainFrame
+
+    -- Shadow Layering
+    local shadowGlow = Instance.new("ImageLabel")
+    shadowGlow.Name = "ShadowGlow"; shadowGlow.Size = UDim2.new(1, 10, 1, 10); shadowGlow.Position = UDim2.new(0.5, 0, 0.5, 0); shadowGlow.AnchorPoint = Vector2.new(0.5, 0.5)
+    shadowGlow.BackgroundTransparency = 1; shadowGlow.Image = "rbxassetid://1316045217"; shadowGlow.ImageColor3 = Color3.fromRGB(0, 0, 0); shadowGlow.ImageTransparency = 0.58 
+    shadowGlow.ScaleType = Enum.ScaleType.Slice; shadowGlow.SliceCenter = Rect.new(10, 10, 118, 118); shadowGlow.ZIndex = 1; shadowGlow.Parent = mainFrame
+
+    -- Branding Mask Header
+    local headerFrame = Instance.new("Frame")
+    headerFrame.Name = "Header"; headerFrame.Size = UDim2.new(1, 0, 0, 42); headerFrame.BackgroundTransparency = 1; headerFrame.ZIndex = 3; headerFrame.Parent = mainFrame
+
+    local maskFrame = Instance.new("Frame")
+    maskFrame.Name = "Mask"; maskFrame.Size = UDim2.new(1, -10, 1, 0); maskFrame.Position = UDim2.new(0, 5, 0, 0); maskFrame.BackgroundTransparency = 1; maskFrame.ClipsDescendants = true; maskFrame.ZIndex = 3; maskFrame.Parent = headerFrame
+
+    local logoLabel = Instance.new("ImageLabel")
+    logoLabel.Name = "Logo"; logoLabel.Size = UDim2.new(0, 290, 0, 80); logoLabel.Position = UDim2.new(0, -88, 0.56, 0); logoLabel.AnchorPoint = Vector2.new(0, 0.5); logoLabel.BackgroundTransparency = 1
+    logoLabel.ScaleType = Enum.ScaleType.Crop; logoLabel.Image = getcustomasset(localPath); logoLabel.ZIndex = 4; logoLabel.Parent = maskFrame
+
+    local divider = Instance.new("Frame")
+    divider.Name = "Divider"; divider.Size = UDim2.new(1, 0, 0, 1); divider.Position = UDim2.new(0, 0, 1, 0); divider.BackgroundColor3 = Color3.fromRGB(230, 230, 230); divider.BorderSizePixel = 0; divider.ZIndex = 3; divider.Parent = headerFrame
+
+    -- Multi-panel configuration
+    local subMenuFrame = Instance.new("Frame")
+    subMenuFrame.Name = "SubMenuFrame"; subMenuFrame.Size = UDim2.new(0, 225, 0, 450); subMenuFrame.Position = UDim2.new(0, 250, 0, 20); subMenuFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255); subMenuFrame.BorderSizePixel = 0; subMenuFrame.Visible = false; subMenuFrame.ZIndex = 2; subMenuFrame.Parent = screenGui
+
+    local subCorner = Instance.new("UICorner"); subCorner.CornerRadius = UDim.new(0, 6); subCorner.Parent = subMenuFrame
+    local subShadow = shadowGlow:Clone(); subShadow.Parent = subMenuFrame
+
+    local subHeader = Instance.new("Frame")
+    subHeader.Name = "SubHeader"; subHeader.Size = UDim2.new(1, 0, 0, 42); subHeader.BackgroundTransparency = 1; subHeader.ZIndex = 3; subHeader.Parent = subMenuFrame
+
+    local subHeaderSkull = Instance.new("ImageLabel")
+    subHeaderSkull.Name = "SkullIcon"; subHeaderSkull.Size = UDim2.new(0, 18, 0, 18); subHeaderSkull.Position = UDim2.new(0, 14, 0.5, 0); subHeaderSkull.AnchorPoint = Vector2.new(0, 0.5); subHeaderSkull.BackgroundTransparency = 1; subHeaderSkull.Image = "rbxassetid://18287498772"; subHeaderSkull.ImageColor3 = Color3.fromRGB(90, 90, 90); subHeaderSkull.ZIndex = 4; subHeaderSkull.Parent = subHeader
+
+    local subHeaderTitle = Instance.new("TextLabel")
+    subHeaderTitle.Name = "Title"; subHeaderTitle.Size = UDim2.new(1, -56, 1, 0); subHeaderTitle.Position = UDim2.new(0, 42, 0, 0); subHeaderTitle.BackgroundTransparency = 1; subHeaderTitle.Text = "Blatant"; subHeaderTitle.TextColor3 = Color3.fromRGB(90, 90, 90); subHeaderTitle.Font = Enum.Font.GothamMedium; subHeaderTitle.TextSize = 14; subHeaderTitle.TextXAlignment = Enum.TextXAlignment.Left; subHeaderTitle.ZIndex = 4; subHeaderTitle.Parent = subHeader
+
+    local subDivider = divider:Clone(); subDivider.Parent = subHeader
+
+    local subContainerList = Instance.new("ScrollingFrame")
+    subContainerList.Name = "SubContainerList"; subContainerList.Size = UDim2.new(1, 0, 1, -43); subContainerList.Position = UDim2.new(0, 0, 0, 43); subContainerList.BackgroundTransparency = 1; subContainerList.BorderSizePixel = 0; subContainerList.ScrollBarThickness = 0; subContainerList.CanvasSize = UDim2.new(0, 0, 0, 400); subContainerList.ZIndex = 5; subContainerList.Parent = subMenuFrame
+
+    local subUiListLayout = Instance.new("UIListLayout"); subUiListLayout.Parent = subContainerList; subUiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    subUiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() subContainerList.CanvasSize = UDim2.new(0, 0, 0, subUiListLayout.AbsoluteContentSize.Y + 20) end)
+
+    local containerList = Instance.new("ScrollingFrame")
+    containerList.Name = "ContainerList"; containerList.Size = UDim2.new(1, 0, 1, -43); containerList.Position = UDim2.new(0, 0, 0, 43); containerList.BackgroundTransparency = 1; containerList.BorderSizePixel = 0; containerList.ScrollBarThickness = 0; containerList.CanvasSize = UDim2.new(0, 0, 0, 400); containerList.ZIndex = 3; containerList.Parent = mainFrame
+
+    local uiListLayout = Instance.new("UIListLayout"); uiListLayout.Parent = containerList; uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    -- Themes & Layout Constants
+    local tweenInfo      = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local hoverMainColor = Color3.fromRGB(45, 45, 45)
+    local idleMainColor  = Color3.fromRGB(90, 90, 90)
+    local hoverArrowColor= Color3.fromRGB(100, 100, 100) 
+    local idleArrowColor = Color3.fromRGB(180, 180, 180)
+    local accentColor    = Color3.fromRGB(16, 159, 116) 
+
+    local speedEnabled, speedValue, speedKeybind = false, 50, Enum.KeyCode.Unknown
+    local activeCategory, categoryRows = nil, {}
+
+    -- Drag Handlers
+    local function makeDraggable(frame)
+        local dragging, dragInput, dragStart, startPos
+        frame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true; dragStart = input.Position; startPos = frame.Position
+                input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+            end
+        end)
+        frame.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end end)
+        UserInputService.InputChanged:Connect(function(input)
+            if input == dragInput and dragging then
+                local delta = input.Position - dragStart
+                frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
+        end)
+    end
+    makeDraggable(mainFrame); makeDraggable(subMenuFrame)
+
+    local function refreshAllCategories()
+        for catName, rowData in pairs(categoryRows) do
+            if activeCategory == catName then
+                rowData.Label.TextColor3 = hoverMainColor; rowData.Icon.ImageColor3 = hoverMainColor; rowData.Arrow.ImageColor3 = hoverArrowColor
+            else
+                rowData.Label.TextColor3 = idleMainColor; rowData.Icon.ImageColor3 = idleMainColor; rowData.Arrow.ImageColor3 = idleArrowColor
+            end
+        end
+    end
+
+    local function createCategoryRow(name, text, iconFile, layoutOrder, onClickCallback)
+        local row = Instance.new("TextButton")
+        row.Name = name .. "Row"; row.Size = UDim2.new(1, 0, 0, 40); row.BackgroundTransparency = 1; row.Text = ""; row.LayoutOrder = layoutOrder; row.ZIndex = 4; row.Parent = containerList
+
+        local icon = Instance.new("ImageLabel")
+        icon.Name = "Icon"; icon.Size = UDim2.new(0, 18, 0, 18); icon.Position = UDim2.new(0, 14, 0.5, 0); icon.AnchorPoint = Vector2.new(0, 0.5); icon.BackgroundTransparency = 1; icon.Image = getcustomasset(iconFile); icon.ImageColor3 = idleMainColor; icon.ZIndex = 4; icon.Parent = row
+
+        local label = Instance.new("TextLabel")
+        label.Name = "Text"; label.Size = UDim2.new(1, -70, 1, 0); label.Position = UDim2.new(0, 42, 0, 0); label.BackgroundTransparency = 1; label.Text = text; label.TextColor3 = idleMainColor; label.Font = Enum.Font.GothamMedium; label.TextSize = 14; label.TextXAlignment = Enum.TextXAlignment.Left; label.ZIndex = 4; label.Parent = row
+
+        local arrow = Instance.new("ImageLabel")
+        arrow.Name = "Arrow"; arrow.Size = UDim2.new(0, 12, 0, 12); arrow.Position = UDim2.new(1, -22, 0.5, 0); arrow.AnchorPoint = Vector2.new(0, 0.5); arrow.BackgroundTransparency = 1; arrow.Image = "rbxassetid://6031094678"; arrow.ImageColor3 = idleArrowColor; arrow.ZIndex = 4; arrow.Parent = row
+
+        categoryRows[name] = {Row = row, Icon = icon, Label = label, Arrow = arrow}
+        row.MouseButton1Click:Connect(function() activeCategory = (activeCategory == name) and nil or name; onClickCallback(); refreshAllCategories() end)
+        row.MouseEnter:Connect(function() TweenService:Create(label, tweenInfo, {TextColor3 = hoverMainColor}):Play(); TweenService:Create(icon, tweenInfo, {ImageColor3 = hoverMainColor}):Play(); TweenService:Create(arrow, tweenInfo, {ImageColor3 = hoverArrowColor}):Play() end)
+        row.MouseLeave:Connect(function() refreshAllCategories() end)
+    end
+
+    -- Speed Custom Dropdown Module
+    local function createSpeedModule(targetParent)
+        local moduleContainer = Instance.new("Frame")
+        moduleContainer.Name = "SpeedModuleContainer"; moduleContainer.Size = UDim2.new(1, 0, 0, 40); moduleContainer.BackgroundTransparency = 1; moduleContainer.ClipsDescendants = true; moduleContainer.ZIndex = 6; moduleContainer.Parent = targetParent
+
+        local mainButton = Instance.new("TextButton")
+        mainButton.Name = "MainButton"; mainButton.Size = UDim2.new(1, 0, 0, 40); mainButton.BackgroundTransparency = 1; mainButton.Text = ""; mainButton.ZIndex = 6; mainButton.Parent = moduleContainer
+
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Name = "Title"; titleLabel.Size = UDim2.new(1, -100, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Speed"; titleLabel.TextColor3 = idleMainColor; titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
+
+        -- Dark background (RGB 238) for the dropdown container background
+        local settingsDrawer = Instance.new("Frame")
+        settingsDrawer.Name = "SettingsDrawer"; settingsDrawer.Size = UDim2.new(1, 0, 0, 110); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BackgroundColor3 = Color3.fromRGB(238, 238, 238); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
+
+        local isDrawerOpen = false
+        local function updateContainerHeight()
+            local targetHeight = isDrawerOpen and 150 or 40
+            TweenService:Create(moduleContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(1, 0, 0, targetHeight)}):Play()
+        end
+
+        local dotsButton = Instance.new("ImageButton")
+        dotsButton.Name = "DotsButton"; dotsButton.Size = UDim2.new(0, 16, 0, 16); dotsButton.Position = UDim2.new(1, -24, 0.5, 0); dotsButton.AnchorPoint = Vector2.new(0, 0.5); dotsButton.BackgroundTransparency = 1; dotsButton.Image = dotsAssetId; dotsButton.ScaleType = Enum.ScaleType.Fit; dotsButton.ImageColor3 = Color3.fromRGB(140, 140, 140); dotsButton.ZIndex = 7; dotsButton.Parent = mainButton
+        dotsButton.MouseButton1Click:Connect(function() isDrawerOpen = not isDrawerOpen; updateContainerHeight() end)
+
+        local bindBox = Instance.new("TextButton")
+        bindBox.Name = "BindBox"; bindBox.Size = UDim2.new(0, 18, 0, 18); bindBox.Position = UDim2.new(1, -52, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.BackgroundColor3 = Color3.fromRGB(248, 248, 248); bindBox.Text = "-"; bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 11; bindBox.TextColor3 = Color3.fromRGB(140, 140, 140); bindBox.ZIndex = 7; bindBox.Parent = mainButton
+        Instance.new("UICorner", bindBox).CornerRadius = UDim.new(0, 4)
+
+        local listeningForKey = false
+        bindBox.MouseButton1Click:Connect(function() listeningForKey = true; bindBox.Text = "..." end)
+        UserInputService.InputBegan:Connect(function(input)
+            if listeningForKey and input.UserInputType == Enum.UserInputType.Keyboard then
+                listeningForKey = false; speedKeybind = input.KeyCode
+                bindBox.Text = (speedKeybind == Enum.KeyCode.Unknown) and "-" or speedKeybind.Name:upper():sub(1, 3)
+            end
+        end)
+
+        local function toggleSpeedState() speedEnabled = not speedEnabled; TweenService:Create(titleLabel, tweenInfo, {TextColor3 = speedEnabled and accentColor or idleMainColor}):Play() end
+        mainButton.MouseButton1Click:Connect(toggleSpeedState)
+
+        -- Clean, high contrast fields (RGB 248) inside the darker dropdown background
+        local modeField = Instance.new("TextLabel")
+        modeField.Size = UDim2.new(1, -28, 0, 28); modeField.Position = UDim2.new(0, 14, 0, 10); modeField.BackgroundColor3 = Color3.fromRGB(248, 248, 248); modeField.Text = "  Mode - Velocity"; modeField.Font = Enum.Font.GothamMedium; modeField.TextSize = 12; modeField.TextColor3 = Color3.fromRGB(100, 100, 100); modeField.TextXAlignment = Enum.TextXAlignment.Left; modeField.ZIndex = 7; modeField.Parent = settingsDrawer
+        Instance.new("UICorner", modeField).CornerRadius = UDim.new(0, 4)
+
+        local moveField = Instance.new("TextLabel")
+        moveField.Size = UDim2.new(1, -28, 0, 28); moveField.Position = UDim2.new(0, 14, 0, 43); moveField.BackgroundColor3 = Color3.fromRGB(248, 248, 248); moveField.Text = "  Move Mode - MoveDirection"; moveField.Font = Enum.Font.GothamMedium; moveField.TextSize = 12; moveField.TextColor3 = Color3.fromRGB(100, 100, 100); moveField.TextXAlignment = Enum.TextXAlignment.Left; moveField.ZIndex = 7; moveField.Parent = settingsDrawer
+        Instance.new("UICorner", moveField).CornerRadius = UDim.new(0, 4)
+
+        local sliderLabel = Instance.new("TextLabel")
+        sliderLabel.Size = UDim2.new(0, 50, 0, 15); sliderLabel.Position = UDim2.new(0, 14, 0, 78); sliderLabel.BackgroundTransparency = 1; sliderLabel.Text = "Speed"; sliderLabel.Font = Enum.Font.GothamMedium; sliderLabel.TextSize = 11; sliderLabel.TextColor3 = Color3.fromRGB(60, 60, 60); sliderLabel.TextXAlignment = Enum.TextXAlignment.Left; sliderLabel.ZIndex = 7; sliderLabel.Parent = settingsDrawer
+
+        local valueLabel = Instance.new("TextLabel")
+        valueLabel.Size = UDim2.new(0, 60, 0, 15); valueLabel.Position = UDim2.new(1, -74, 0, 78); valueLabel.BackgroundTransparency = 1; valueLabel.Text = "50 studs"; valueLabel.Font = Enum.Font.GothamMedium; valueLabel.TextSize = 11; valueLabel.TextColor3 = Color3.fromRGB(60, 60, 60); valueLabel.TextXAlignment = Enum.TextXAlignment.Right; valueLabel.ZIndex = 7; valueLabel.Parent = settingsDrawer
+
+        local sliderTrack = Instance.new("Frame")
+        sliderTrack.Size = UDim2.new(1, -28, 0, 5); sliderTrack.Position = UDim2.new(0, 14, 0, 98); sliderTrack.BackgroundColor3 = Color3.fromRGB(215, 215, 215); sliderTrack.BorderSizePixel = 0; sliderTrack.ZIndex = 7; sliderTrack.Parent = settingsDrawer
+        Instance.new("UICorner", sliderTrack).CornerRadius = UDim.new(0, 2)
+
+        local sliderFill = Instance.new("Frame")
+        sliderFill.Size = UDim2.new(0.5, 0, 1, 0); sliderFill.BackgroundColor3 = accentColor; sliderFill.BorderSizePixel = 0; sliderFill.ZIndex = 8; sliderFill.Parent = sliderTrack
+        Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(0, 2)
+
+        local sliderKnob = Instance.new("ImageButton")
+        sliderKnob.Size = UDim2.new(0, 13, 0, 13); sliderKnob.Position = UDim2.new(0.5, 0, 0.5, 0); sliderKnob.AnchorPoint = Vector2.new(0.5, 0.5); sliderKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); sliderKnob.ZIndex = 9; sliderKnob.Parent = sliderTrack
+        Instance.new("UICorner", sliderKnob).CornerRadius = UDim.new(1, 0)
+        local knobStroke = Instance.new("UIStroke", sliderKnob); knobStroke.Thickness = 2; knobStroke.Color = accentColor; knobStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+        local isDragging = false
+        local function updateSlider(input)
+            local relativeX = math.clamp((input.Position.X - sliderTrack.AbsolutePosition.X) / sliderTrack.AbsoluteSize.X, 0, 1)
+            sliderFill.Size = UDim2.new(relativeX, 0, 1, 0); sliderKnob.Position = UDim2.new(relativeX, 0, 0.5, 0)
+            speedValue = math.round(1 + (relativeX * 149)); valueLabel.Text = tostring(speedValue) .. " studs"
+        end
+        sliderKnob.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = true end end)
+        UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = false end end)
+        UserInputService.InputChanged:Connect(function(input) if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then updateSlider(input) end end)
+
+        return toggleSpeedState
+    end
+
+    local triggerSpeedToggle = createSpeedModule(subContainerList)
+
+    createCategoryRow("Blatant", "Blatant", blatantIconPath, 1, function() subMenuFrame.Visible = (activeCategory == "Blatant") end)
+    createCategoryRow("Utility", "Utility", utilityIconPath, 2, function() subMenuFrame.Visible = false end)
+
+    -- Execution Loops
+    RunService.RenderStepped:Connect(function()
+        if speedEnabled then
+            local char = LocalPlayer.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if root and char and char:FindFirstChildWhichIsA("Humanoid") then
+                local dir = char:FindFirstChildWhichIsA("Humanoid").MoveDirection
+                root.Velocity = Vector3.new(dir.X * speedValue, root.Velocity.Y, dir.Z * speedValue)
+            end
+        end
+    end)
+
+    UserInputService.InputBegan:Connect(function(input, processed)
+        if not processed and speedKeybind ~= Enum.KeyCode.Unknown and input.KeyCode == speedKeybind then triggerSpeedToggle() end
+    end)
+
+    local menuOpen = true
+    local menuBlur = Instance.new("BlurEffect"); menuBlur.Name = "SenMenuBlur"; menuBlur.Size = 24; menuBlur.Enabled = true; menuBlur.Parent = Lighting
+    UserInputService.InputBegan:Connect(function(input)
+        if input.KeyCode == Enum.KeyCode.RightShift then
+            menuOpen = not menuOpen; mainFrame.Visible = menuOpen; subMenuFrame.Visible = (menuOpen and subMenuFrame.Visible); menuBlur.Enabled = menuOpen
+        end
+    end)
+
+    -- Interactive Notification Sequence
+    local function createNotification()
+        local notifyFrame = Instance.new("Frame")
+        notifyFrame.Name = "NotificationFrame"; notifyFrame.Size = UDim2.new(0, 245, 0, 58); notifyFrame.Position = UDim2.new(1, 30, 1, -75); notifyFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255); notifyFrame.BackgroundTransparency = 0.35; notifyFrame.BorderSizePixel = 0; notifyFrame.ClipsDescendants = true; notifyFrame.Parent = screenGui
+
+        local notifyCorner = Instance.new("UICorner"); notifyCorner.CornerRadius = UDim.new(0, 6); notifyCorner.Parent = notifyFrame
+        local notifyStroke = Instance.new("UIStroke"); notifyStroke.Thickness = 1; notifyStroke.Color = Color3.fromRGB(230, 230, 230); notifyStroke.Transparency = 0.2; notifyStroke.Parent = notifyFrame
+        local notifyShadow = shadowGlow:Clone(); notifyShadow.ImageTransparency = 0.75; notifyShadow.Parent = notifyFrame
+
+        local notifyBlur = Instance.new("BlurEffect"); notifyBlur.Name = "NotificationBlur"; notifyBlur.Size = 12; notifyBlur.Enabled = true; notifyBlur.Parent = Lighting
+
+        local infoIcon = Instance.new("ImageLabel")
+        infoIcon.Name = "InfoIcon"; infoIcon.Size = UDim2.new(0, 18, 0, 18); infoIcon.Position = UDim2.new(0, 14, 0, 13); infoIcon.BackgroundTransparency = 1; infoIcon.Image = "rbxassetid://11419714349"; infoIcon.ImageColor3 = Color3.fromRGB(110, 110, 110); infoIcon.Parent = notifyFrame
+
+        local headerTxt = Instance.new("TextLabel")
+        headerTxt.Name = "HeaderText"; headerTxt.Size = UDim2.new(1, -50, 0, 18); headerTxt.Position = UDim2.new(0, 40, 0, 11); headerTxt.BackgroundTransparency = 1; headerTxt.Text = "Finished Loading"; headerTxt.TextColor3 = Color3.fromRGB(50, 50, 50); headerTxt.Font = Enum.Font.GothamBold; headerTxt.TextSize = 14; headerTxt.TextXAlignment = Enum.TextXAlignment.Left; headerTxt.Parent = notifyFrame
+
+        local bodyTxt = Instance.new("TextLabel")
+        bodyTxt.Name = "BodyText"; bodyTxt.Size = UDim2.new(1, -50, 0, 18); bodyTxt.Position = UDim2.new(0, 40, 0, 29); bodyTxt.BackgroundTransparency = 1; bodyTxt.Text = "Press RIGHTSHIFT to open GUI"; bodyTxt.TextColor3 = Color3.fromRGB(120, 120, 120); bodyTxt.Font = Enum.Font.GothamMedium; bodyTxt.TextSize = 12; bodyTxt.TextXAlignment = Enum.TextXAlignment.Left; bodyTxt.Parent = notifyFrame
+
+        local countdownBarContainer = Instance.new("Frame")
+        countdownBarContainer.Name = "CountdownContainer"; countdownBarContainer.Size = UDim2.new(1, 0, 0, 3); countdownBarContainer.Position = UDim2.new(0, 0, 1, -3); countdownBarContainer.BackgroundTransparency = 1; countdownBarContainer.BorderSizePixel = 0; countdownBarContainer.Parent = notifyFrame
+
+        local countdownFill = Instance.new("Frame")
+        countdownFill.Name = "CountdownFill"; countdownFill.Size = UDim2.new(1, 0, 1, 0); countdownFill.BackgroundColor3 = accentColor; countdownFill.BackgroundTransparency = 0.1; countdownFill.BorderSizePixel = 0; countdownFill.Parent = countdownBarContainer
+
+        task.spawn(function()
+            TweenService:Create(notifyFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(1, -265, 1, -75)}):Play()
+            task.wait(0.4)
+            local barTween = TweenService:Create(countdownFill, TweenInfo.new(3.5, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)})
+            barTween:Play()
+            barTween.Completed:Connect(function()
+                local closeTween = TweenService:Create(notifyFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(1, 30, 1, -75)})
+                closeTween:Play()
+                closeTween.Completed:Connect(function() notifyFrame:Destroy(); notifyBlur:Destroy() end)
+            end)
+        end)
+    end
+
+    createNotification()
+end
