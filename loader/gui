@@ -1,4 +1,3 @@
--- Multi-Notification Stacking System & Auto-Loader Setup
 local UserInputService = game:GetService("UserInputService")
 local Lighting         = game:GetService("Lighting")
 local TweenService     = game:GetService("TweenService")
@@ -7,19 +6,19 @@ local RunService       = game:GetService("RunService")
 local HttpService      = game:GetService("HttpService")
 local LocalPlayer      = Players.LocalPlayer
 
--- File Structure Configuration
 local folderName       = "sen_v4"
 local localPath       = folderName .. "/logo.png"
 local blatantIconPath = folderName .. "/blatanticon.png"
 local utilityIconPath = folderName .. "/utilityicon.png"
 local infoIconPath    = folderName .. "/info.png"
+local customSettingsPath = folderName .. "/customsettings.png"
+local backIconPath     = folderName .. "/back.png"
+local closeIconPath    = folderName .. "/close.png"
 local settingsFile    = folderName .. "/config.json"
 local dotsAssetId     = "rbxassetid://14368314459"
 
--- Automatically build directories if they do not exist
 if makefolder then pcall(function() makefolder(folderName) end) end
 
--- Download missing files asynchronously
 local function downloadAsset(path, url)
     if isfile and not isfile(path) then
         pcall(function()
@@ -31,35 +30,34 @@ local function downloadAsset(path, url)
     end
 end
 
--- Loader: Pull assets cleanly from repository
 downloadAsset(localPath, "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/logo.png")
 downloadAsset(blatantIconPath, "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/blatanticon.png")
 downloadAsset(utilityIconPath, "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/utilityicon.png")
 downloadAsset(infoIconPath, "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/info.png")
+downloadAsset(customSettingsPath, "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/customsettings.png")
+downloadAsset(backIconPath, "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/back.png")
+downloadAsset(closeIconPath, "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/close.png")
 
--- Configuration Defaults & State Management
 local senSettings = {
+    theme = "Light",
+    menuKeybind = "RightBracket",
     speedEnabled = false,
     speedValue = 50,
     speedKeybind = "Unknown",
-    
     flyEnabled = false,
     flyValue = 50,
     flyVerticalValue = 50,
     flyKeybind = "Unknown",
     flyKeysMode = "Space/LeftControl",
-
     phaseEnabled = false,
     phaseKeybind = "Unknown",
     phaseMode = "Standard",
-
     spiderEnabled = false,
     spiderValue = 30,
     spiderKeybind = "Unknown",
     spiderAnimEnabled = true
 }
 
--- Load saved configuration
 if isfile and isfile(settingsFile) then
     local dataSuccess, parsed = pcall(function() return HttpService:JSONDecode(readfile(settingsFile)) end)
     if dataSuccess and type(parsed) == "table" then
@@ -76,13 +74,12 @@ local function saveCurrentSettings()
 end
 
 if getcustomasset then
-    -- Core UI Layout Construction
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "SenV4Menu"; screenGui.ResetOnSpawn = false; screenGui.Parent = game:GetService("CoreGui") 
     
     local mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"; mainFrame.Size = UDim2.new(0, 225, 0, 450); mainFrame.Position = UDim2.new(0, 20, 0, 20)
-    mainFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255); mainFrame.BorderSizePixel = 0; mainFrame.ZIndex = 2; mainFrame.Parent = screenGui
+    mainFrame.BorderSizePixel = 0; mainFrame.ZIndex = 2; mainFrame.Parent = screenGui
     Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 6)
 
     local shadowGlow = Instance.new("ImageLabel")
@@ -90,22 +87,53 @@ if getcustomasset then
     shadowGlow.BackgroundTransparency = 1; shadowGlow.Image = "rbxassetid://1316045217"; shadowGlow.ImageColor3 = Color3.fromRGB(0, 0, 0); shadowGlow.ImageTransparency = 0.58 
     shadowGlow.ScaleType = Enum.ScaleType.Slice; shadowGlow.SliceCenter = Rect.new(10, 10, 118, 118); shadowGlow.ZIndex = 1; shadowGlow.Parent = mainFrame
 
+    local mainView = Instance.new("Frame")
+    mainView.Name = "MainView"; mainView.Size = UDim2.new(1, 0, 1, 0); mainView.BackgroundTransparency = 1; mainView.ZIndex = 3; mainView.Parent = mainFrame
+
     local headerFrame = Instance.new("Frame")
-    headerFrame.Name = "Header"; headerFrame.Size = UDim2.new(1, 0, 0, 42); headerFrame.BackgroundTransparency = 1; headerFrame.ZIndex = 3; headerFrame.Parent = mainFrame
+    headerFrame.Name = "Header"; headerFrame.Size = UDim2.new(1, 0, 0, 42); headerFrame.BackgroundTransparency = 1; headerFrame.ZIndex = 3; headerFrame.Parent = mainView
 
     local maskFrame = Instance.new("Frame")
-    maskFrame.Name = "Mask"; maskFrame.Size = UDim2.new(1, -10, 1, 0); maskFrame.Position = UDim2.new(0, 5, 0, 0); maskFrame.BackgroundTransparency = 1; maskFrame.ClipsDescendants = true; maskFrame.ZIndex = 3; maskFrame.Parent = headerFrame
+    maskFrame.Name = "Mask"; maskFrame.Size = UDim2.new(1, -50, 1, 0); maskFrame.Position = UDim2.new(0, 5, 0, 0); maskFrame.BackgroundTransparency = 1; maskFrame.ClipsDescendants = true; maskFrame.ZIndex = 3; maskFrame.Parent = headerFrame
 
     local logoLabel = Instance.new("ImageLabel")
-    logoLabel.Name = "Logo"; logoLabel.Size = UDim2.new(0, 290, 0, 80); logoLabel.Position = UDim2.new(0, -88, 0.56, 0); logoLabel.AnchorPoint = Vector2.new(0, 0.5); logoLabel.BackgroundTransparency = 1
-    logoLabel.ScaleType = Enum.ScaleType.Crop; logoLabel.Image = getcustomasset(localPath); logoLabel.ZIndex = 4; logoLabel.Parent = maskFrame
+    logoLabel.Name = "Logo"; logoLabel.Size = UDim2.new(0, 290, 0, 80); logoLabel.Position = UDim2.new(0, -88, 0.56, 0); logoLabel.AnchorPoint = Vector2.new(0, 0.5); logoLabel.BackgroundTransparency = 1; logoLabel.ScaleType = Enum.ScaleType.Crop; logoLabel.Image = getcustomasset(localPath); logoLabel.ZIndex = 4; logoLabel.Parent = maskFrame
+
+    local settingsBtn = Instance.new("ImageButton")
+    settingsBtn.Name = "SettingsButton"; settingsBtn.Size = UDim2.new(0, 14, 0, 14); settingsBtn.Position = UDim2.new(1, -24, 0.5, 0); settingsBtn.AnchorPoint = Vector2.new(0, 0.5); settingsBtn.BackgroundTransparency = 1; settingsBtn.Image = getcustomasset(customSettingsPath); settingsBtn.ZIndex = 4; settingsBtn.Parent = headerFrame
 
     local divider = Instance.new("Frame")
-    divider.Name = "Divider"; divider.Size = UDim2.new(1, 0, 0, 1); divider.Position = UDim2.new(0, 0, 1, 0); divider.BackgroundColor3 = Color3.fromRGB(230, 230, 230); divider.BorderSizePixel = 0; divider.ZIndex = 3; divider.Parent = headerFrame
+    divider.Name = "Divider"; divider.Size = UDim2.new(1, 0, 0, 1); divider.Position = UDim2.new(0, 0, 1, 0); divider.BorderSizePixel = 0; divider.ZIndex = 3; divider.Parent = headerFrame
 
-    -- Side Menu Structure
+    local containerList = Instance.new("ScrollingFrame")
+    containerList.Name = "ContainerList"; containerList.Size = UDim2.new(1, 0, 1, -43); containerList.Position = UDim2.new(0, 0, 0, 43); containerList.BackgroundTransparency = 1; containerList.BorderSizePixel = 0; containerList.ScrollBarThickness = 0; containerList.CanvasSize = UDim2.new(0, 0, 0, 400); containerList.ZIndex = 3; containerList.Parent = mainView
+
+    local uiListLayout = Instance.new("UIListLayout"); uiListLayout.Parent = containerList; uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    local settingsView = Instance.new("Frame")
+    settingsView.Name = "SettingsView"; settingsView.Size = UDim2.new(1, 0, 1, 0); settingsView.BackgroundTransparency = 1; settingsView.Visible = false; settingsView.ZIndex = 3; settingsView.Parent = mainFrame
+
+    local settingsHeader = Instance.new("Frame")
+    settingsHeader.Name = "SettingsHeader"; settingsHeader.Size = UDim2.new(1, 0, 0, 42); settingsHeader.BackgroundTransparency = 1; settingsHeader.ZIndex = 3; settingsHeader.Parent = settingsView
+
+    local backBtn = Instance.new("ImageButton")
+    backBtn.Name = "BackButton"; backBtn.Size = UDim2.new(0, 16, 0, 16); backBtn.Position = UDim2.new(0, 14, 0.5, 0); backBtn.AnchorPoint = Vector2.new(0, 0.5); backBtn.BackgroundTransparency = 1; backBtn.Image = getcustomasset(backIconPath); backBtn.ZIndex = 4; backBtn.Parent = settingsHeader
+
+    local settingsTitle = Instance.new("TextLabel")
+    settingsTitle.Name = "SettingsTitle"; settingsTitle.Size = UDim2.new(1, -80, 1, 0); settingsTitle.Position = UDim2.new(0, 42, 0, 0); settingsTitle.BackgroundTransparency = 1; settingsTitle.Text = "Settings"; settingsTitle.Font = Enum.Font.GothamMedium; settingsTitle.TextSize = 14; settingsTitle.TextXAlignment = Enum.TextXAlignment.Left; settingsTitle.ZIndex = 4; settingsTitle.Parent = settingsHeader
+
+    local closeBtn = Instance.new("ImageButton")
+    closeBtn.Name = "CloseButton"; closeBtn.Size = UDim2.new(0, 14, 0, 14); closeBtn.Position = UDim2.new(1, -24, 0.5, 0); closeBtn.AnchorPoint = Vector2.new(0, 0.5); closeBtn.BackgroundTransparency = 1; closeBtn.Image = getcustomasset(closeIconPath); closeBtn.ZIndex = 4; closeBtn.Parent = settingsHeader
+
+    local settingsDivider = divider:Clone(); settingsDivider.Parent = settingsHeader
+
+    local settingsContainer = Instance.new("ScrollingFrame")
+    settingsContainer.Name = "SettingsContainer"; settingsContainer.Size = UDim2.new(1, 0, 1, -43); settingsContainer.Position = UDim2.new(0, 0, 0, 43); settingsContainer.BackgroundTransparency = 1; settingsContainer.BorderSizePixel = 0; settingsContainer.ScrollBarThickness = 0; settingsContainer.CanvasSize = UDim2.new(0, 0, 0, 400); settingsContainer.ZIndex = 3; settingsContainer.Parent = settingsView
+
+    local settingsUiList = Instance.new("UIListLayout"); settingsUiList.Parent = settingsContainer; settingsUiList.SortOrder = Enum.SortOrder.LayoutOrder
+
     local subMenuFrame = Instance.new("Frame")
-    subMenuFrame.Name = "SubMenuFrame"; subMenuFrame.Size = UDim2.new(0, 225, 0, 450); subMenuFrame.Position = UDim2.new(0, 250, 0, 20); subMenuFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255); subMenuFrame.BorderSizePixel = 0; subMenuFrame.Visible = false; subMenuFrame.ZIndex = 2; subMenuFrame.Parent = screenGui
+    subMenuFrame.Name = "SubMenuFrame"; subMenuFrame.Size = UDim2.new(0, 225, 0, 450); subMenuFrame.Position = UDim2.new(0, 250, 0, 20); subMenuFrame.BorderSizePixel = 0; subMenuFrame.Visible = false; subMenuFrame.ZIndex = 2; subMenuFrame.Parent = screenGui
     Instance.new("UICorner", subMenuFrame).CornerRadius = UDim.new(0, 6)
     local subShadow = shadowGlow:Clone(); subShadow.Parent = subMenuFrame
 
@@ -113,34 +141,78 @@ if getcustomasset then
     subHeader.Name = "SubHeader"; subHeader.Size = UDim2.new(1, 0, 0, 42); subHeader.BackgroundTransparency = 1; subHeader.ZIndex = 3; subHeader.Parent = subMenuFrame
 
     local subHeaderSkull = Instance.new("ImageLabel")
-    subHeaderSkull.Name = "SkullIcon"; subHeaderSkull.Size = UDim2.new(0, 18, 0, 18); subHeaderSkull.Position = UDim2.new(0, 14, 0.5, 0); subHeaderSkull.AnchorPoint = Vector2.new(0, 0.5); subHeaderSkull.BackgroundTransparency = 1; subHeaderSkull.Image = getcustomasset(blatantIconPath); subHeaderSkull.ImageColor3 = Color3.fromRGB(90, 90, 90); subHeaderSkull.ZIndex = 4; subHeaderSkull.Parent = subHeader
+    subHeaderSkull.Name = "SkullIcon"; subHeaderSkull.Size = UDim2.new(0, 18, 0, 18); subHeaderSkull.Position = UDim2.new(0, 14, 0.5, 0); subHeaderSkull.AnchorPoint = Vector2.new(0, 0.5); subHeaderSkull.BackgroundTransparency = 1; subHeaderSkull.Image = getcustomasset(blatantIconPath); subHeaderSkull.ZIndex = 4; subHeaderSkull.Parent = subHeader
 
     local subHeaderTitle = Instance.new("TextLabel")
-    subHeaderTitle.Name = "Title"; subHeaderTitle.Size = UDim2.new(1, -56, 1, 0); subHeaderTitle.Position = UDim2.new(0, 42, 0, 0); subHeaderTitle.BackgroundTransparency = 1; subHeaderTitle.Text = "Blatant"; subHeaderTitle.TextColor3 = Color3.fromRGB(90, 90, 90); subHeaderTitle.Font = Enum.Font.GothamMedium; subHeaderTitle.TextSize = 14; subHeaderTitle.TextXAlignment = Enum.TextXAlignment.Left; subHeaderTitle.ZIndex = 4; subHeaderTitle.Parent = subHeader
+    subHeaderTitle.Name = "Title"; subHeaderTitle.Size = UDim2.new(1, -56, 1, 0); subHeaderTitle.Position = UDim2.new(0, 42, 0, 0); subHeaderTitle.BackgroundTransparency = 1; subHeaderTitle.Text = "Blatant"; subHeaderTitle.Font = Enum.Font.GothamMedium; subHeaderTitle.TextSize = 14; subHeaderTitle.TextXAlignment = Enum.TextXAlignment.Left; subHeaderTitle.ZIndex = 4; subHeaderTitle.Parent = subHeader
 
     local subDivider = divider:Clone(); subDivider.Parent = subHeader
 
-    local subContainerList = Instance.new("ScrollingFrame")
-    subContainerList.Name = "SubContainerList"; subContainerList.Size = UDim2.new(1, 0, 1, -43); subContainerList.Position = UDim2.new(0, 0, 0, 43); subContainerList.BackgroundTransparency = 1; subContainerList.BorderSizePixel = 0; subContainerList.ScrollBarThickness = 0; subContainerList.CanvasSize = UDim2.new(0, 0, 0, 500); subContainerList.ZIndex = 5; subContainerList.Parent = subMenuFrame
+    local blatantContentFrame = Instance.new("ScrollingFrame")
+    blatantContentFrame.Name = "BlatantContent"; blatantContentFrame.Size = UDim2.new(1, 0, 1, -43); blatantContentFrame.Position = UDim2.new(0, 0, 0, 43); blatantContentFrame.BackgroundTransparency = 1; blatantContentFrame.BorderSizePixel = 0; blatantContentFrame.ScrollBarThickness = 0; blatantContentFrame.CanvasSize = UDim2.new(0, 0, 0, 500); blatantContentFrame.Visible = false; blatantContentFrame.ZIndex = 5; blatantContentFrame.Parent = subMenuFrame
 
-    local subUiListLayout = Instance.new("UIListLayout"); subUiListLayout.Parent = subContainerList; subUiListLayout.SortOrder = Enum.SortOrder.LayoutOrder; subUiListLayout.Padding = UDim.new(0, 2)
-    subUiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() subContainerList.CanvasSize = UDim2.new(0, 0, 0, subUiListLayout.AbsoluteContentSize.Y + 20) end)
+    local subUiListLayout = Instance.new("UIListLayout"); subUiListLayout.Parent = blatantContentFrame; subUiListLayout.SortOrder = Enum.SortOrder.LayoutOrder; subUiListLayout.Padding = UDim.new(0, 2)
+    subUiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() blatantContentFrame.CanvasSize = UDim2.new(0, 0, 0, subUiListLayout.AbsoluteContentSize.Y + 20) end)
 
-    local containerList = Instance.new("ScrollingFrame")
-    containerList.Name = "ContainerList"; containerList.Size = UDim2.new(1, 0, 1, -43); containerList.Position = UDim2.new(0, 0, 0, 43); containerList.BackgroundTransparency = 1; containerList.BorderSizePixel = 0; containerList.ScrollBarThickness = 0; containerList.CanvasSize = UDim2.new(0, 0, 0, 400); containerList.ZIndex = 3; containerList.Parent = mainFrame
+    local utilityContentFrame = Instance.new("Frame")
+    utilityContentFrame.Name = "UtilityContent"; utilityContentFrame.Size = UDim2.new(1, 0, 1, -43); utilityContentFrame.Position = UDim2.new(0, 0, 0, 43); utilityContentFrame.BackgroundTransparency = 1; utilityContentFrame.Visible = false; utilityContentFrame.ZIndex = 5; utilityContentFrame.Parent = subMenuFrame
 
-    local uiListLayout = Instance.new("UIListLayout"); uiListLayout.Parent = containerList; uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    local utilityEmptyLabel = Instance.new("TextLabel")
+    utilityEmptyLabel.Size = UDim2.new(1, 0, 1, 0); utilityEmptyLabel.BackgroundTransparency = 1; utilityEmptyLabel.Text = "No features added yet"; utilityEmptyLabel.Font = Enum.Font.GothamMedium; utilityEmptyLabel.TextSize = 12; utilityEmptyLabel.TextTransparency = 0.5; utilityEmptyLabel.ZIndex = 6; utilityEmptyLabel.Parent = utilityContentFrame
 
     local tweenInfo      = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local hoverMainColor = Color3.fromRGB(45, 45, 45)
-    local idleMainColor  = Color3.fromRGB(90, 90, 90)
-    local hoverArrowColor= Color3.fromRGB(100, 100, 100) 
-    local idleArrowColor = Color3.fromRGB(180, 180, 180)
     local accentColor    = Color3.fromRGB(16, 159, 116) 
+    
+    local themeConfigs = {
+        Light = {
+            bg = Color3.fromRGB(255, 255, 255),
+            drawerBg = Color3.fromRGB(238, 238, 238),
+            fieldBg = Color3.fromRGB(248, 248, 248),
+            divider = Color3.fromRGB(230, 230, 230),
+            textMain = Color3.fromRGB(90, 90, 90),
+            textHover = Color3.fromRGB(45, 45, 45),
+            textDark = Color3.fromRGB(40, 40, 40),
+            textBody = Color3.fromRGB(80, 80, 80),
+            arrowIdle = Color3.fromRGB(180, 180, 180),
+            arrowHover = Color3.fromRGB(100, 100, 100),
+            settingsIcon = Color3.fromRGB(60, 60, 60),
+            sliderTrack = Color3.fromRGB(215, 215, 215),
+            logoColor = Color3.fromRGB(0, 0, 0)
+        },
+        Dark = {
+            bg = Color3.fromRGB(25, 25, 25),
+            drawerBg = Color3.fromRGB(35, 35, 35),
+            fieldBg = Color3.fromRGB(45, 45, 45),
+            divider = Color3.fromRGB(50, 50, 50),
+            textMain = Color3.fromRGB(255, 255, 255),
+            textHover = Color3.fromRGB(255, 255, 255),
+            textDark = Color3.fromRGB(255, 255, 255),
+            textBody = Color3.fromRGB(220, 220, 220),
+            arrowIdle = Color3.fromRGB(255, 255, 255),
+            arrowHover = Color3.fromRGB(255, 255, 255),
+            settingsIcon = Color3.fromRGB(255, 255, 255),
+            sliderTrack = Color3.fromRGB(60, 60, 60),
+            logoColor = Color3.fromRGB(255, 255, 255)
+        }
+    }
 
     local activeCategory, categoryRows = nil, {}
+    local drawerElements = {}
+    local settingsElements = {}
 
-    -- Drag System
+    local function updateTabIndicators()
+        local currentTheme = themeConfigs[senSettings.theme]
+        for name, data in pairs(categoryRows) do
+            if activeCategory == name then
+                data.Indicator.Text = "[✓]"
+                data.Indicator.TextColor3 = accentColor
+            else
+                data.Indicator.Text = "X"
+                data.Indicator.TextColor3 = currentTheme.arrowIdle
+            end
+        end
+    end
+
     local function makeDraggable(frame)
         local dragging, dragInput, dragStart, startPos
         frame.InputBegan:Connect(function(input)
@@ -159,7 +231,6 @@ if getcustomasset then
     end
     makeDraggable(mainFrame); makeDraggable(subMenuFrame)
 
-    -- Dynamic Upward Stacking Notification System (Transparent Pure White)
     local activeNotifications = {}
     local notificationHeight = 58
     local notificationSpacing = 8
@@ -175,27 +246,27 @@ if getcustomasset then
     end
 
     local function createNotification(title, message)
+        local currentTheme = themeConfigs[senSettings.theme]
         local notifyFrame = Instance.new("Frame")
         notifyFrame.Name = "NotificationFrame"; notifyFrame.Size = UDim2.new(0, 245, 0, notificationHeight); notifyFrame.Position = UDim2.new(1, 30, 1, baseOffset)
-        notifyFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255); notifyFrame.BackgroundTransparency = 0.25; notifyFrame.BorderSizePixel = 0; notifyFrame.ClipsDescendants = true; notifyFrame.Parent = screenGui
+        notifyFrame.BackgroundColor3 = currentTheme.bg; notifyFrame.BackgroundTransparency = 0.25; notifyFrame.BorderSizePixel = 0; notifyFrame.ClipsDescendants = true; notifyFrame.Parent = screenGui
 
         local notifyCorner = Instance.new("UICorner"); notifyCorner.CornerRadius = UDim.new(0, 6); notifyCorner.Parent = notifyFrame
-        local notifyStroke = Instance.new("UIStroke"); notifyStroke.Thickness = 1; notifyStroke.Color = Color3.fromRGB(220, 220, 220); notifyStroke.Transparency = 0.3; notifyStroke.Parent = notifyFrame
+        local notifyStroke = Instance.new("UIStroke"); notifyStroke.Thickness = 1; notifyStroke.Color = currentTheme.divider; notifyStroke.Transparency = 0.3; notifyStroke.Parent = notifyFrame
         local notifyShadow = shadowGlow:Clone(); notifyShadow.ImageTransparency = 0.85; notifyShadow.Parent = notifyFrame
 
         table.insert(activeNotifications, 1, notifyFrame)
         repositionNotifications()
 
-        -- Custom info icon styled nicely on the white background
         local infoIcon = Instance.new("ImageLabel")
         infoIcon.Name = "InfoIcon"; infoIcon.Size = UDim2.new(0, 14, 0, 14); infoIcon.Position = UDim2.new(1, -22, 0, 10); infoIcon.BackgroundTransparency = 1
-        infoIcon.Image = getcustomasset(infoIconPath); infoIcon.ImageColor3 = Color3.fromRGB(60, 60, 60); infoIcon.Parent = notifyFrame
+        infoIcon.Image = getcustomasset(infoIconPath); infoIcon.ImageColor3 = currentTheme.settingsIcon; infoIcon.Parent = notifyFrame
 
         local headerTxt = Instance.new("TextLabel")
-        headerTxt.Name = "HeaderText"; headerTxt.Size = UDim2.new(1, -50, 0, 18); headerTxt.Position = UDim2.new(0, 14, 0, 8); headerTxt.BackgroundTransparency = 1; headerTxt.Text = title; headerTxt.TextColor3 = Color3.fromRGB(40, 40, 40); headerTxt.Font = Enum.Font.GothamBold; headerTxt.TextSize = 14; headerTxt.TextXAlignment = Enum.TextXAlignment.Left; headerTxt.Parent = notifyFrame
+        headerTxt.Name = "HeaderText"; headerTxt.Size = UDim2.new(1, -50, 0, 18); headerTxt.Position = UDim2.new(0, 14, 0, 8); headerTxt.BackgroundTransparency = 1; headerTxt.Text = title; headerTxt.TextColor3 = currentTheme.textDark; headerTxt.Font = Enum.Font.GothamBold; headerTxt.TextSize = 14; headerTxt.TextXAlignment = Enum.TextXAlignment.Left; headerTxt.Parent = notifyFrame
 
         local bodyTxt = Instance.new("TextLabel")
-        bodyTxt.Name = "BodyText"; bodyTxt.Size = UDim2.new(1, -30, 0, 18); bodyTxt.Position = UDim2.new(0, 14, 0, 26); bodyTxt.BackgroundTransparency = 1; bodyTxt.Text = message; bodyTxt.TextColor3 = Color3.fromRGB(80, 80, 80); bodyTxt.Font = Enum.Font.GothamMedium; bodyTxt.TextSize = 12; bodyTxt.TextXAlignment = Enum.TextXAlignment.Left; bodyTxt.Parent = notifyFrame
+        bodyTxt.Name = "BodyText"; bodyTxt.Size = UDim2.new(1, -30, 0, 18); bodyTxt.Position = UDim2.new(0, 14, 0, 26); bodyTxt.BackgroundTransparency = 1; bodyTxt.Text = message; bodyTxt.TextColor3 = currentTheme.textBody; bodyTxt.Font = Enum.Font.GothamMedium; bodyTxt.TextSize = 12; bodyTxt.TextXAlignment = Enum.TextXAlignment.Left; bodyTxt.Parent = notifyFrame
 
         local countdownBarContainer = Instance.new("Frame")
         countdownBarContainer.Name = "CountdownContainer"; countdownBarContainer.Size = UDim2.new(1, 0, 0, 3); countdownBarContainer.Position = UDim2.new(0, 0, 1, -3); countdownBarContainer.BackgroundTransparency = 1; countdownBarContainer.BorderSizePixel = 0; countdownBarContainer.Parent = notifyFrame
@@ -210,7 +281,6 @@ if getcustomasset then
             barTween.Completed:Connect(function()
                 local positionIndex = table.find(activeNotifications, notifyFrame)
                 if positionIndex then table.remove(activeNotifications, positionIndex) end
-                
                 local currentPos = notifyFrame.Position
                 local closeTween = TweenService:Create(notifyFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(1, 30, currentPos.X.Scale, currentPos.Y.Offset)})
                 closeTween:Play()
@@ -220,34 +290,210 @@ if getcustomasset then
         end)
     end
 
-    local function refreshAllCategories()
+    local function applyVisualTheme()
+        local c = themeConfigs[senSettings.theme]
+        mainFrame.BackgroundColor3 = c.bg
+        subMenuFrame.BackgroundColor3 = c.bg
+        divider.BackgroundColor3 = c.divider
+        settingsDivider.BackgroundColor3 = c.divider
+        subDivider.BackgroundColor3 = c.divider
+        subHeaderTitle.TextColor3 = c.textMain
+        subHeaderSkull.ImageColor3 = c.textMain
+        settingsBtn.ImageColor3 = c.settingsIcon
+        backBtn.ImageColor3 = c.settingsIcon
+        closeBtn.ImageColor3 = c.settingsIcon
+        settingsTitle.TextColor3 = c.textMain
+        logoLabel.ImageColor3 = c.logoColor
+        utilityEmptyLabel.TextColor3 = c.textMain
+
         for catName, rowData in pairs(categoryRows) do
             if activeCategory == catName then
-                rowData.Label.TextColor3 = hoverMainColor; rowData.Icon.ImageColor3 = hoverMainColor; rowData.Arrow.ImageColor3 = hoverArrowColor
+                rowData.Label.TextColor3 = c.textHover
+                rowData.Icon.ImageColor3 = c.textHover
             else
-                rowData.Label.TextColor3 = idleMainColor; rowData.Icon.ImageColor3 = idleMainColor; rowData.Arrow.ImageColor3 = idleArrowColor
+                rowData.Label.TextColor3 = c.textMain
+                rowData.Icon.ImageColor3 = c.textMain
+            end
+        end
+
+        updateTabIndicators()
+
+        for _, el in ipairs(drawerElements) do
+            if el.Instance then
+                if el.Type == "Drawer" then
+                    el.Instance.BackgroundColor3 = c.drawerBg
+                elseif el.Type == "Field" then
+                    el.Instance.BackgroundColor3 = c.fieldBg
+                    el.Instance.TextColor3 = c.textBody
+                elseif el.Type == "Label" then
+                    el.Instance.TextColor3 = c.textDark
+                elseif el.Type == "ValueLabel" then
+                    el.Instance.TextColor3 = c.textDark
+                elseif el.Type == "Track" then
+                    el.Instance.BackgroundColor3 = c.sliderTrack
+                elseif el.Type == "Knob" then
+                    el.Instance.BackgroundColor3 = c.bg
+                elseif el.Type == "BindBox" then
+                    el.Instance.BackgroundColor3 = c.fieldBg
+                    el.Instance.TextColor3 = c.textMain
+                elseif el.Type == "ModuleTitle" then
+                    if not el.ActiveCheck() then
+                        el.Instance.TextColor3 = c.textMain
+                    end
+                end
+            end
+        end
+
+        for _, el in ipairs(settingsElements) do
+            if el.Instance then
+                if el.Type == "Label" then
+                    el.Instance.TextColor3 = c.textMain
+                elseif el.Type == "Field" then
+                    el.Instance.BackgroundColor3 = c.fieldBg
+                    el.Instance.TextColor3 = c.textBody
+                elseif el.Type == "BindBox" then
+                    el.Instance.BackgroundColor3 = c.fieldBg
+                    el.Instance.TextColor3 = c.textMain
+                elseif el.Type == "Drawer" then
+                    el.Instance.BackgroundColor3 = c.drawerBg
+                end
             end
         end
     end
+
+    settingsBtn.MouseButton1Click:Connect(function()
+        mainView.Visible = false
+        settingsView.Visible = true
+    end)
+
+    backBtn.MouseButton1Click:Connect(function()
+        settingsView.Visible = false
+        mainView.Visible = true
+    end)
+
+    closeBtn.MouseButton1Click:Connect(function()
+        settingsView.Visible = false
+        mainView.Visible = true
+    end)
 
     local function createCategoryRow(name, text, iconFile, layoutOrder, onClickCallback)
         local row = Instance.new("TextButton")
         row.Name = name .. "Row"; row.Size = UDim2.new(1, 0, 0, 40); row.BackgroundTransparency = 1; row.Text = ""; row.LayoutOrder = layoutOrder; row.ZIndex = 4; row.Parent = containerList
 
         local icon = Instance.new("ImageLabel")
-        icon.Name = "Icon"; icon.Size = UDim2.new(0, 18, 0, 18); icon.Position = UDim2.new(0, 14, 0.5, 0); icon.AnchorPoint = Vector2.new(0, 0.5); icon.BackgroundTransparency = 1; icon.Image = getcustomasset(iconFile); icon.ImageColor3 = idleMainColor; icon.ZIndex = 4; icon.Parent = row
+        icon.Name = "Icon"; icon.Size = UDim2.new(0, 18, 0, 18); icon.Position = UDim2.new(0, 14, 0.5, 0); icon.AnchorPoint = Vector2.new(0, 0.5); icon.BackgroundTransparency = 1; icon.Image = getcustomasset(iconFile); icon.ZIndex = 4; icon.Parent = row
 
         local label = Instance.new("TextLabel")
-        label.Name = "Text"; label.Size = UDim2.new(1, -70, 1, 0); label.Position = UDim2.new(0, 42, 0, 0); label.BackgroundTransparency = 1; label.Text = text; label.TextColor3 = idleMainColor; label.Font = Enum.Font.GothamMedium; label.TextSize = 14; label.TextXAlignment = Enum.TextXAlignment.Left; label.ZIndex = 4; label.Parent = row
+        label.Name = "Text"; label.Size = UDim2.new(1, -70, 1, 0); label.Position = UDim2.new(0, 42, 0, 0); label.BackgroundTransparency = 1; label.Text = text; label.Font = Enum.Font.GothamMedium; label.TextSize = 14; label.TextXAlignment = Enum.TextXAlignment.Left; label.ZIndex = 4; label.Parent = row
 
-        local arrow = Instance.new("ImageLabel")
-        arrow.Name = "Arrow"; arrow.Size = UDim2.new(0, 12, 0, 12); arrow.Position = UDim2.new(1, -22, 0.5, 0); arrow.AnchorPoint = Vector2.new(0, 0.5); arrow.BackgroundTransparency = 1; arrow.Image = "rbxassetid://6031094678"; arrow.ImageColor3 = idleArrowColor; arrow.ZIndex = 4; arrow.Parent = row
+        local indicator = Instance.new("TextLabel")
+        indicator.Name = "Indicator"; indicator.Size = UDim2.new(0, 24, 0, 20); indicator.Position = UDim2.new(1, -30, 0.5, 0); indicator.AnchorPoint = Vector2.new(0, 0.5); indicator.BackgroundTransparency = 1; indicator.Text = "X"; indicator.Font = Enum.Font.GothamBold; indicator.TextSize = 14; indicator.ZIndex = 4; indicator.Parent = row
 
-        categoryRows[name] = {Row = row, Icon = icon, Label = label, Arrow = arrow}
-        row.MouseButton1Click:Connect(function() activeCategory = (activeCategory == name) and nil or name; onClickCallback(); refreshAllCategories() end)
-        row.MouseEnter:Connect(function() TweenService:Create(label, tweenInfo, {TextColor3 = hoverMainColor}):Play(); TweenService:Create(icon, tweenInfo, {ImageColor3 = hoverMainColor}):Play(); TweenService:Create(arrow, tweenInfo, {ImageColor3 = hoverArrowColor}):Play() end)
-        row.MouseLeave:Connect(function() refreshAllCategories() end)
+        categoryRows[name] = {Row = row, Icon = icon, Label = label, Indicator = indicator}
+        
+        row.MouseButton1Click:Connect(function() 
+            if activeCategory == name then
+                activeCategory = nil
+            else
+                activeCategory = name
+            end
+            onClickCallback() 
+            applyVisualTheme() 
+        end)
+        
+        row.MouseEnter:Connect(function() 
+            local c = themeConfigs[senSettings.theme]
+            TweenService:Create(label, tweenInfo, {TextColor3 = c.textHover}):Play()
+            TweenService:Create(icon, tweenInfo, {ImageColor3 = c.textHover}):Play()
+        end)
+        
+        row.MouseLeave:Connect(function() 
+            applyVisualTheme() 
+        end)
     end
+
+    local function createStaticSettingsRow(text, layoutOrder)
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, 0, 0, 40); row.BackgroundTransparency = 1; row.LayoutOrder = layoutOrder; row.Parent = settingsContainer
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -40, 1, 0); label.Position = UDim2.new(0, 14, 0, 0); label.BackgroundTransparency = 1; label.Text = text; label.Font = Enum.Font.GothamMedium; label.TextSize = 14; label.TextXAlignment = Enum.TextXAlignment.Left; label.ZIndex = 4; label.Parent = row
+        table.insert(settingsElements, {Type = "Label", Instance = label})
+    end
+
+    local function createThemeSettingsRow(layoutOrder)
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, 0, 0, 40); row.BackgroundTransparency = 1; row.LayoutOrder = layoutOrder; row.Parent = settingsContainer
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -120, 1, 0); label.Position = UDim2.new(0, 14, 0, 0); label.BackgroundTransparency = 1; label.Text = "GUI Theme"; label.Font = Enum.Font.GothamMedium; label.TextSize = 14; label.TextXAlignment = Enum.TextXAlignment.Left; label.ZIndex = 4; label.Parent = row
+        table.insert(settingsElements, {Type = "Label", Instance = label})
+
+        local dropdownBtn = Instance.new("TextButton")
+        dropdownBtn.Size = UDim2.new(0, 80, 0, 24); dropdownBtn.Position = UDim2.new(1, -14, 0.5, 0); dropdownBtn.AnchorPoint = Vector2.new(1, 0.5); dropdownBtn.Text = "  " .. senSettings.theme; dropdownBtn.Font = Enum.Font.GothamMedium; dropdownBtn.TextSize = 12; dropdownBtn.TextXAlignment = Enum.TextXAlignment.Left; dropdownBtn.ZIndex = 5; dropdownBtn.Parent = row
+        Instance.new("UICorner", dropdownBtn).CornerRadius = UDim.new(0, 4)
+        table.insert(settingsElements, {Type = "Field", Instance = dropdownBtn})
+
+        local dList = Instance.new("Frame")
+        dList.Size = UDim2.new(1, 0, 0, 50); dList.Position = UDim2.new(0, 0, 1, 2); dList.Visible = false; dList.ZIndex = 10; dList.Parent = dropdownBtn
+        Instance.new("UICorner", dList).CornerRadius = UDim.new(0, 4)
+        table.insert(settingsElements, {Type = "Drawer", Instance = dList})
+        local dUi = Instance.new("UIListLayout"); dUi.Parent = dList
+
+        local dOpen = false
+        dropdownBtn.MouseButton1Click:Connect(function()
+            dOpen = not dOpen
+            dList.Visible = dOpen
+        end)
+
+        for _, tName in ipairs({"Light", "Dark"}) do
+            local opt = Instance.new("TextButton")
+            opt.Size = UDim2.new(1, 0, 0, 25); opt.BackgroundTransparency = 1; opt.Text = "  " .. tName; opt.Font = Enum.Font.GothamMedium; opt.TextSize = 11; opt.TextXAlignment = Enum.TextXAlignment.Left; opt.ZIndex = 11; opt.Parent = dList
+            table.insert(settingsElements, {Type = "Field", Instance = opt})
+            opt.MouseButton1Click:Connect(function()
+                senSettings.theme = tName
+                dropdownBtn.Text = "  " .. tName
+                dOpen = false; dList.Visible = false
+                applyVisualTheme()
+                createNotification("Theme Switch", "Theme changed to " .. tName)
+                saveCurrentSettings()
+            end)
+        end
+    end
+
+    local function createRebindSettingsRow(layoutOrder)
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, 0, 0, 40); row.BackgroundTransparency = 1; row.LayoutOrder = layoutOrder; row.Parent = settingsContainer
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -110, 1, 0); label.Position = UDim2.new(0, 14, 0, 0); label.BackgroundTransparency = 1; label.Text = "Rebind GUI"; label.Font = Enum.Font.GothamMedium; label.TextSize = 14; label.TextXAlignment = Enum.TextXAlignment.Left; label.ZIndex = 4; label.Parent = row
+        table.insert(settingsElements, {Type = "Label", Instance = label})
+
+        local bindBox = Instance.new("TextButton")
+        bindBox.Size = UDim2.new(0, 80, 0, 24); bindBox.Position = UDim2.new(1, -14, 0.5, 0); bindBox.AnchorPoint = Vector2.new(1, 0.5); bindBox.Text = senSettings.menuKeybind:upper(); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 11; bindBox.ZIndex = 5; bindBox.Parent = row
+        Instance.new("UICorner", bindBox).CornerRadius = UDim.new(0, 4)
+        table.insert(settingsElements, {Type = "BindBox", Instance = bindBox})
+
+        local listening = false
+        bindBox.MouseButton1Click:Connect(function() listening = true; bindBox.Text = "..." end)
+        UserInputService.InputBegan:Connect(function(input)
+            if listening and input.UserInputType == Enum.UserInputType.Keyboard then
+                listening = false
+                if input.KeyCode == Enum.KeyCode.Escape then
+                    senSettings.menuKeybind = "RightBracket"
+                else
+                    senSettings.menuKeybind = input.KeyCode.Name
+                end
+                bindBox.Text = senSettings.menuKeybind:upper()
+                saveCurrentSettings()
+            end
+        end)
+    end
+
+    createStaticSettingsRow("General", 1)
+    createStaticSettingsRow("Notifications", 2)
+    createThemeSettingsRow(3)
+    createRebindSettingsRow(4)
 
     local function setupBindLogic(settingsKey, bindBox)
         local listening = false
@@ -268,7 +514,6 @@ if getcustomasset then
         end)
     end
 
-    -- 1. SPEED MODULE
     local function createSpeedModule(targetParent)
         local moduleContainer = Instance.new("Frame")
         moduleContainer.Name = "SpeedModuleContainer"; moduleContainer.Size = UDim2.new(1, 0, 0, 40); moduleContainer.BackgroundTransparency = 1; moduleContainer.ClipsDescendants = true; moduleContainer.ZIndex = 6; moduleContainer.LayoutOrder = 1; moduleContainer.Parent = targetParent
@@ -277,10 +522,12 @@ if getcustomasset then
         mainButton.Name = "MainButton"; mainButton.Size = UDim2.new(1, 0, 0, 40); mainButton.BackgroundTransparency = 1; mainButton.Text = ""; mainButton.ZIndex = 6; mainButton.Parent = moduleContainer
 
         local titleLabel = Instance.new("TextLabel")
-        titleLabel.Name = "Title"; titleLabel.Size = UDim2.new(1, -100, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Speed"; titleLabel.TextColor3 = senSettings.speedEnabled and accentColor or idleMainColor; titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
+        titleLabel.Name = "Title"; titleLabel.Size = UDim2.new(1, -100, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Speed"; titleLabel.TextColor3 = senSettings.speedEnabled and accentColor or Color3.fromRGB(0,0,0); titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
+        table.insert(drawerElements, {Type = "ModuleTitle", Instance = titleLabel, ActiveCheck = function() return senSettings.speedEnabled end})
 
         local settingsDrawer = Instance.new("Frame")
-        settingsDrawer.Name = "SettingsDrawer"; settingsDrawer.Size = UDim2.new(1, 0, 0, 110); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BackgroundColor3 = Color3.fromRGB(238, 238, 238); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
+        settingsDrawer.Name = "SettingsDrawer"; settingsDrawer.Size = UDim2.new(1, 0, 0, 110); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
+        table.insert(drawerElements, {Type = "Drawer", Instance = settingsDrawer})
 
         local isDrawerOpen = false
         local dotsButton = Instance.new("ImageButton")
@@ -288,35 +535,42 @@ if getcustomasset then
         dotsButton.MouseButton1Click:Connect(function() isDrawerOpen = not isDrawerOpen; TweenService:Create(moduleContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(1, 0, 0, isDrawerOpen and 150 or 40)}):Play() end)
 
         local bindBox = Instance.new("TextButton")
-        bindBox.Name = "BindBox"; bindBox.Size = UDim2.new(0, 26, 0, 18); bindBox.Position = UDim2.new(1, -56, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.BackgroundColor3 = Color3.fromRGB(248, 248, 248); bindBox.Text = senSettings.speedKeybind == "Unknown" and "-" or senSettings.speedKeybind:upper():sub(1,3); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 10; bindBox.TextColor3 = Color3.fromRGB(140, 140, 140); bindBox.ZIndex = 7; bindBox.Parent = mainButton
+        bindBox.Name = "BindBox"; bindBox.Size = UDim2.new(0, 26, 0, 18); bindBox.Position = UDim2.new(1, -56, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.Text = senSettings.speedKeybind == "Unknown" and "-" or senSettings.speedKeybind:upper():sub(1,3); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 10; bindBox.ZIndex = 7; bindBox.Parent = mainButton
         Instance.new("UICorner", bindBox).CornerRadius = UDim.new(0, 4)
+        table.insert(drawerElements, {Type = "BindBox", Instance = bindBox})
         setupBindLogic("speedKeybind", bindBox)
 
         local function toggleSpeedState()
             senSettings.speedEnabled = not senSettings.speedEnabled
-            TweenService:Create(titleLabel, tweenInfo, {TextColor3 = senSettings.speedEnabled and accentColor or idleMainColor}):Play()
+            local targetColor = senSettings.speedEnabled and accentColor or themeConfigs[senSettings.theme].textMain
+            TweenService:Create(titleLabel, tweenInfo, {TextColor3 = targetColor}):Play()
             createNotification("Speed Mode", "Feature has been " .. (senSettings.speedEnabled and "Enabled" or "Disabled"))
             saveCurrentSettings()
         end
         mainButton.MouseButton1Click:Connect(toggleSpeedState)
 
         local modeField = Instance.new("TextLabel")
-        modeField.Size = UDim2.new(1, -28, 0, 28); modeField.Position = UDim2.new(0, 14, 0, 10); modeField.BackgroundColor3 = Color3.fromRGB(248, 248, 248); modeField.Text = "  Mode - Velocity"; modeField.Font = Enum.Font.GothamMedium; modeField.TextSize = 12; modeField.TextColor3 = Color3.fromRGB(100, 100, 100); modeField.TextXAlignment = Enum.TextXAlignment.Left; modeField.ZIndex = 7; modeField.Parent = settingsDrawer
+        modeField.Size = UDim2.new(1, -28, 0, 28); modeField.Position = UDim2.new(0, 14, 0, 10); modeField.Text = "  Mode - Velocity"; modeField.Font = Enum.Font.GothamMedium; modeField.TextSize = 12; modeField.TextXAlignment = Enum.TextXAlignment.Left; modeField.ZIndex = 7; modeField.Parent = settingsDrawer
         Instance.new("UICorner", modeField).CornerRadius = UDim.new(0, 4)
+        table.insert(drawerElements, {Type = "Field", Instance = modeField})
 
         local moveField = Instance.new("TextLabel")
-        moveField.Size = UDim2.new(1, -28, 0, 28); moveField.Position = UDim2.new(0, 14, 0, 43); moveField.BackgroundColor3 = Color3.fromRGB(248, 248, 248); moveField.Text = "  Move Mode - MoveDirection"; moveField.Font = Enum.Font.GothamMedium; moveField.TextSize = 12; moveField.TextColor3 = Color3.fromRGB(100, 100, 100); moveField.TextXAlignment = Enum.TextXAlignment.Left; moveField.ZIndex = 7; moveField.Parent = settingsDrawer
+        moveField.Size = UDim2.new(1, -28, 0, 28); moveField.Position = UDim2.new(0, 14, 0, 43); moveField.Text = "  Move Mode - MoveDirection"; moveField.Font = Enum.Font.GothamMedium; moveField.TextSize = 12; moveField.TextXAlignment = Enum.TextXAlignment.Left; moveField.ZIndex = 7; moveField.Parent = settingsDrawer
         Instance.new("UICorner", moveField).CornerRadius = UDim.new(0, 4)
+        table.insert(drawerElements, {Type = "Field", Instance = moveField})
 
         local sliderLabel = Instance.new("TextLabel")
-        sliderLabel.Size = UDim2.new(0, 50, 0, 15); sliderLabel.Position = UDim2.new(0, 14, 0, 78); sliderLabel.BackgroundTransparency = 1; sliderLabel.Text = "Speed"; sliderLabel.Font = Enum.Font.GothamMedium; sliderLabel.TextSize = 11; sliderLabel.TextColor3 = Color3.fromRGB(60, 60, 60); sliderLabel.TextXAlignment = Enum.TextXAlignment.Left; sliderLabel.ZIndex = 7; sliderLabel.Parent = settingsDrawer
+        sliderLabel.Size = UDim2.new(0, 50, 0, 15); sliderLabel.Position = UDim2.new(0, 14, 0, 78); sliderLabel.BackgroundTransparency = 1; sliderLabel.Text = "Speed"; sliderLabel.Font = Enum.Font.GothamMedium; sliderLabel.TextSize = 11; sliderLabel.TextXAlignment = Enum.TextXAlignment.Left; sliderLabel.ZIndex = 7; sliderLabel.Parent = settingsDrawer
+        table.insert(drawerElements, {Type = "Label", Instance = sliderLabel})
 
         local valueLabel = Instance.new("TextLabel")
-        valueLabel.Size = UDim2.new(0, 60, 0, 15); valueLabel.Position = UDim2.new(1, -74, 0, 78); valueLabel.BackgroundTransparency = 1; valueLabel.Text = tostring(senSettings.speedValue) .. " studs"; valueLabel.Font = Enum.Font.GothamMedium; valueLabel.TextSize = 11; valueLabel.TextColor3 = Color3.fromRGB(60, 60, 60); valueLabel.TextXAlignment = Enum.TextXAlignment.Right; valueLabel.ZIndex = 7; valueLabel.Parent = settingsDrawer
+        valueLabel.Size = UDim2.new(0, 60, 0, 15); valueLabel.Position = UDim2.new(1, -74, 0, 78); valueLabel.BackgroundTransparency = 1; valueLabel.Text = tostring(senSettings.speedValue) .. " studs"; valueLabel.Font = Enum.Font.GothamMedium; valueLabel.TextSize = 11; valueLabel.TextXAlignment = Enum.TextXAlignment.Right; valueLabel.ZIndex = 7; valueLabel.Parent = settingsDrawer
+        table.insert(drawerElements, {Type = "ValueLabel", Instance = valueLabel})
 
         local sliderTrack = Instance.new("Frame")
-        sliderTrack.Size = UDim2.new(1, -28, 0, 5); sliderTrack.Position = UDim2.new(0, 14, 0, 98); sliderTrack.BackgroundColor3 = Color3.fromRGB(215, 215, 215); sliderTrack.BorderSizePixel = 0; sliderTrack.ZIndex = 7; sliderTrack.Parent = settingsDrawer
+        sliderTrack.Size = UDim2.new(1, -28, 0, 5); sliderTrack.Position = UDim2.new(0, 14, 0, 98); sliderTrack.BorderSizePixel = 0; sliderTrack.ZIndex = 7; sliderTrack.Parent = settingsDrawer
         Instance.new("UICorner", sliderTrack).CornerRadius = UDim.new(0, 2)
+        table.insert(drawerElements, {Type = "Track", Instance = sliderTrack})
 
         local currentScale = math.clamp((senSettings.speedValue - 1) / 149, 0, 1)
         local sliderFill = Instance.new("Frame")
@@ -324,8 +578,9 @@ if getcustomasset then
         Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(0, 2)
 
         local sliderKnob = Instance.new("ImageButton")
-        sliderKnob.Size = UDim2.new(0, 13, 0, 13); sliderKnob.Position = UDim2.new(currentScale, 0, 0.5, 0); sliderKnob.AnchorPoint = Vector2.new(0.5, 0.5); sliderKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); sliderKnob.ZIndex = 9; sliderKnob.Parent = sliderTrack
+        sliderKnob.Size = UDim2.new(0, 13, 0, 13); sliderKnob.Position = UDim2.new(currentScale, 0, 0.5, 0); sliderKnob.AnchorPoint = Vector2.new(0.5, 0.5); sliderKnob.ZIndex = 9; sliderKnob.Parent = sliderTrack
         Instance.new("UICorner", sliderKnob).CornerRadius = UDim.new(1, 0)
+        table.insert(drawerElements, {Type = "Knob", Instance = sliderKnob})
 
         local isDragging = false
         sliderKnob.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = true end end)
@@ -343,7 +598,6 @@ if getcustomasset then
         return toggleSpeedState
     end
 
-    -- 2. FLY MODULE
     local function createFlyModule(targetParent)
         local moduleContainer = Instance.new("Frame")
         moduleContainer.Name = "FlyModuleContainer"; moduleContainer.Size = UDim2.new(1, 0, 0, 40); moduleContainer.BackgroundTransparency = 1; moduleContainer.ClipsDescendants = true; moduleContainer.ZIndex = 6; moduleContainer.LayoutOrder = 2; moduleContainer.Parent = targetParent
@@ -352,10 +606,12 @@ if getcustomasset then
         mainButton.Name = "MainButton"; mainButton.Size = UDim2.new(1, 0, 0, 40); mainButton.BackgroundTransparency = 1; mainButton.Text = ""; mainButton.ZIndex = 6; mainButton.Parent = moduleContainer
 
         local titleLabel = Instance.new("TextLabel")
-        titleLabel.Name = "Title"; titleLabel.Size = UDim2.new(1, -110, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Fly"; titleLabel.TextColor3 = senSettings.flyEnabled and accentColor or idleMainColor; titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
+        titleLabel.Name = "Title"; titleLabel.Size = UDim2.new(1, -110, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Fly"; titleLabel.TextColor3 = senSettings.flyEnabled and accentColor or Color3.fromRGB(0,0,0); titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
+        table.insert(drawerElements, {Type = "ModuleTitle", Instance = titleLabel, ActiveCheck = function() return senSettings.flyEnabled end})
 
         local settingsDrawer = Instance.new("Frame")
-        settingsDrawer.Name = "SettingsDrawer"; settingsDrawer.Size = UDim2.new(1, 0, 0, 145); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BackgroundColor3 = Color3.fromRGB(238, 238, 238); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
+        settingsDrawer.Name = "SettingsDrawer"; settingsDrawer.Size = UDim2.new(1, 0, 0, 145); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
+        table.insert(drawerElements, {Type = "Drawer", Instance = settingsDrawer})
 
         local isDrawerOpen = false
         local dotsButton = Instance.new("ImageButton")
@@ -363,54 +619,59 @@ if getcustomasset then
         dotsButton.MouseButton1Click:Connect(function() isDrawerOpen = not isDrawerOpen; TweenService:Create(moduleContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(1, 0, 0, isDrawerOpen and 185 or 40)}):Play() end)
 
         local bindBox = Instance.new("TextButton")
-        bindBox.Name = "BindBox"; bindBox.Size = UDim2.new(0, 26, 0, 18); bindBox.Position = UDim2.new(1, -56, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.BackgroundColor3 = Color3.fromRGB(248, 248, 248); bindBox.Text = senSettings.flyKeybind == "Unknown" and "-" or senSettings.flyKeybind:upper():sub(1,3); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 10; bindBox.TextColor3 = Color3.fromRGB(140, 140, 140); bindBox.ZIndex = 7; bindBox.Parent = mainButton
+        bindBox.Name = "BindBox"; bindBox.Size = UDim2.new(0, 26, 0, 18); bindBox.Position = UDim2.new(1, -56, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.Text = senSettings.flyKeybind == "Unknown" and "-" or senSettings.flyKeybind:upper():sub(1,3); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 10; bindBox.ZIndex = 7; bindBox.Parent = mainButton
         Instance.new("UICorner", bindBox).CornerRadius = UDim.new(0, 4)
+        table.insert(drawerElements, {Type = "BindBox", Instance = bindBox})
         setupBindLogic("flyKeybind", bindBox)
 
         local function toggleFlyState()
             senSettings.flyEnabled = not senSettings.flyEnabled
-            TweenService:Create(titleLabel, tweenInfo, {TextColor3 = senSettings.flyEnabled and accentColor or idleMainColor}):Play()
+            local targetColor = senSettings.flyEnabled and accentColor or themeConfigs[senSettings.theme].textMain
+            TweenService:Create(titleLabel, tweenInfo, {TextColor3 = targetColor}):Play()
             createNotification("Fly Mode", "Feature has been " .. (senSettings.flyEnabled and "Enabled" or "Disabled"))
             saveCurrentSettings()
         end
         mainButton.MouseButton1Click:Connect(toggleFlyState)
 
         local dropdownContainer = Instance.new("TextButton")
-        dropdownContainer.Size = UDim2.new(1, -28, 0, 28); dropdownContainer.Position = UDim2.new(0, 14, 0, 10); dropdownContainer.BackgroundColor3 = Color3.fromRGB(248, 248, 248); dropdownContainer.Text = "  Keys - " .. senSettings.flyKeysMode; dropdownContainer.Font = Enum.Font.GothamMedium; dropdownContainer.TextSize = 12; dropdownContainer.TextColor3 = Color3.fromRGB(100, 100, 100); dropdownContainer.TextXAlignment = Enum.TextXAlignment.Left; dropdownContainer.ZIndex = 7; dropdownContainer.Parent = settingsDrawer
+        dropdownContainer.Size = UDim2.new(1, -28, 0, 28); dropdownContainer.Position = UDim2.new(0, 14, 0, 10); dropdownContainer.Text = "  Keys - " .. senSettings.flyKeysMode; dropdownContainer.Font = Enum.Font.GothamMedium; dropdownContainer.TextSize = 12; dropdownContainer.TextXAlignment = Enum.TextXAlignment.Left; dropdownContainer.ZIndex = 7; dropdownContainer.Parent = settingsDrawer
         Instance.new("UICorner", dropdownContainer).CornerRadius = UDim.new(0, 4)
-
-        local dropdownArrow = Instance.new("ImageLabel")
-        dropdownArrow.Size = UDim2.new(0, 10, 0, 10); dropdownArrow.Position = UDim2.new(1, -18, 0.5, 0); dropdownArrow.AnchorPoint = Vector2.new(0, 0.5); dropdownArrow.BackgroundTransparency = 1; dropdownArrow.Image = "rbxassetid://6031094678"; dropdownArrow.ImageColor3 = Color3.fromRGB(140, 140, 140); dropdownArrow.ZIndex = 8; dropdownArrow.Parent = dropdownContainer
+        table.insert(drawerElements, {Type = "Field", Instance = dropdownContainer})
 
         local dropdownListFrame = Instance.new("Frame")
-        dropdownListFrame.Size = UDim2.new(1, 0, 0, 75); dropdownListFrame.Position = UDim2.new(0, 0, 1, 2); dropdownListFrame.BackgroundColor3 = Color3.fromRGB(250, 250, 250); dropdownListFrame.BorderSizePixel = 0; dropdownListFrame.Visible = false; dropdownListFrame.ZIndex = 10; dropdownListFrame.Parent = dropdownContainer
+        dropdownListFrame.Size = UDim2.new(1, 0, 0, 75); dropdownListFrame.Position = UDim2.new(0, 0, 1, 2); dropdownListFrame.BorderSizePixel = 0; dropdownListFrame.Visible = false; dropdownListFrame.ZIndex = 10; dropdownListFrame.Parent = dropdownContainer
         Instance.new("UICorner", dropdownListFrame).CornerRadius = UDim.new(0, 4)
+        table.insert(drawerElements, {Type = "Drawer", Instance = dropdownListFrame})
         local listUi = Instance.new("UIListLayout"); listUi.Parent = dropdownListFrame
 
         local dropdownOpen = false
-        dropdownContainer.MouseButton1Click:Connect(function() dropdownOpen = not dropdownOpen; dropdownListFrame.Visible = dropdownOpen; dropdownArrow.Rotation = dropdownOpen and 180 or 0 end)
+        dropdownContainer.MouseButton1Click:Connect(function() dropdownOpen = not dropdownOpen; dropdownListFrame.Visible = dropdownOpen end)
 
         local availableModes = {"Space/LeftControl", "Q/E", "Z/C"}
         for _, modeName in ipairs(availableModes) do
             local optionBtn = Instance.new("TextButton")
-            optionBtn.Size = UDim2.new(1, 0, 0, 25); optionBtn.BackgroundTransparency = 1; optionBtn.Text = "  " .. modeName; optionBtn.Font = Enum.Font.GothamMedium; optionBtn.TextSize = 11; optionBtn.TextColor3 = Color3.fromRGB(120, 120, 120); optionBtn.TextXAlignment = Enum.TextXAlignment.Left; optionBtn.ZIndex = 11; optionBtn.Parent = dropdownListFrame
+            optionBtn.Size = UDim2.new(1, 0, 0, 25); optionBtn.BackgroundTransparency = 1; optionBtn.Text = "  " .. modeName; optionBtn.Font = Enum.Font.GothamMedium; optionBtn.TextSize = 11; optionBtn.TextXAlignment = Enum.TextXAlignment.Left; optionBtn.ZIndex = 11; optionBtn.Parent = dropdownListFrame
+            table.insert(drawerElements, {Type = "Field", Instance = optionBtn})
             optionBtn.MouseButton1Click:Connect(function()
                 senSettings.flyKeysMode = modeName
                 dropdownContainer.Text = "  Keys - " .. modeName
-                dropdownOpen = false; dropdownListFrame.Visible = false; dropdownArrow.Rotation = 0
+                dropdownOpen = false; dropdownListFrame.Visible = false
                 saveCurrentSettings()
             end)
         end
 
         local horizLabel = Instance.new("TextLabel")
-        horizLabel.Size = UDim2.new(0, 100, 0, 15); horizLabel.Position = UDim2.new(0, 14, 0, 48); horizLabel.BackgroundTransparency = 1; horizLabel.Text = "Flight Speed"; horizLabel.Font = Enum.Font.GothamMedium; horizLabel.TextSize = 11; horizLabel.TextColor3 = Color3.fromRGB(60, 60, 60); horizLabel.TextXAlignment = Enum.TextXAlignment.Left; horizLabel.ZIndex = 7; horizLabel.Parent = settingsDrawer
+        horizLabel.Size = UDim2.new(0, 100, 0, 15); horizLabel.Position = UDim2.new(0, 14, 0, 48); horizLabel.BackgroundTransparency = 1; horizLabel.Text = "Flight Speed"; horizLabel.Font = Enum.Font.GothamMedium; inline = true; horizLabel.TextSize = 11; horizLabel.TextXAlignment = Enum.TextXAlignment.Left; horizLabel.ZIndex = 7; horizLabel.Parent = settingsDrawer
+        table.insert(drawerElements, {Type = "Label", Instance = horizLabel})
         
         local horizValLabel = Instance.new("TextLabel")
-        horizValLabel.Size = UDim2.new(0, 60, 0, 15); horizValLabel.Position = UDim2.new(1, -74, 0, 48); horizValLabel.BackgroundTransparency = 1; horizValLabel.Text = tostring(senSettings.flyValue) .. " studs"; horizValLabel.Font = Enum.Font.GothamMedium; horizValLabel.TextSize = 11; horizValLabel.TextColor3 = Color3.fromRGB(60, 60, 60); horizValLabel.TextXAlignment = Enum.TextXAlignment.Right; horizValLabel.ZIndex = 7; horizValLabel.Parent = settingsDrawer
+        horizValLabel.Size = UDim2.new(0, 60, 0, 15); horizValLabel.Position = UDim2.new(1, -74, 0, 48); horizValLabel.BackgroundTransparency = 1; horizValLabel.Text = tostring(senSettings.flyValue) .. " studs"; horizValLabel.Font = Enum.Font.GothamMedium; horizValLabel.TextSize = 11; horizValLabel.TextXAlignment = Enum.TextXAlignment.Right; horizValLabel.ZIndex = 7; horizValLabel.Parent = settingsDrawer
+        table.insert(drawerElements, {Type = "ValueLabel", Instance = horizValLabel})
 
         local horizTrack = Instance.new("Frame")
-        horizTrack.Size = UDim2.new(1, -28, 0, 5); horizTrack.Position = UDim2.new(0, 14, 0, 66); horizTrack.BackgroundColor3 = Color3.fromRGB(215, 215, 215); horizTrack.BorderSizePixel = 0; horizTrack.ZIndex = 7; horizTrack.Parent = settingsDrawer
+        horizTrack.Size = UDim2.new(1, -28, 0, 5); horizTrack.Position = UDim2.new(0, 14, 0, 66); horizTrack.BorderSizePixel = 0; horizTrack.ZIndex = 7; horizTrack.Parent = settingsDrawer
         Instance.new("UICorner", horizTrack).CornerRadius = UDim.new(0, 2)
+        table.insert(drawerElements, {Type = "Track", Instance = horizTrack})
 
         local initialHorizScale = math.clamp((senSettings.flyValue - 1) / 149, 0, 1)
         local horizFill = Instance.new("Frame")
@@ -418,8 +679,9 @@ if getcustomasset then
         Instance.new("UICorner", horizFill).CornerRadius = UDim.new(0, 2)
 
         local horizKnob = Instance.new("ImageButton")
-        horizKnob.Size = UDim2.new(0, 13, 0, 13); horizKnob.Position = UDim2.new(initialHorizScale, 0, 0.5, 0); horizKnob.AnchorPoint = Vector2.new(0.5, 0.5); horizKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); horizKnob.ZIndex = 9; horizKnob.Parent = horizTrack
+        horizKnob.Size = UDim2.new(0, 13, 0, 13); horizKnob.Position = UDim2.new(initialHorizScale, 0, 0.5, 0); horizKnob.AnchorPoint = Vector2.new(0.5, 0.5); horizKnob.ZIndex = 9; horizKnob.Parent = horizTrack
         Instance.new("UICorner", horizKnob).CornerRadius = UDim.new(1, 0)
+        table.insert(drawerElements, {Type = "Knob", Instance = horizKnob})
 
         local dragHoriz = false
         horizKnob.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragHoriz = true end end)
@@ -435,14 +697,17 @@ if getcustomasset then
         end)
 
         local vertLabel = Instance.new("TextLabel")
-        vertLabel.Size = UDim2.new(0, 100, 0, 15); vertLabel.Position = UDim2.new(0, 14, 0, 80); vertLabel.BackgroundTransparency = 1; vertLabel.Text = "Vertical Speed"; vertLabel.Font = Enum.Font.GothamMedium; vertLabel.TextSize = 11; vertLabel.TextColor3 = Color3.fromRGB(60, 60, 60); vertLabel.TextXAlignment = Enum.TextXAlignment.Left; vertLabel.ZIndex = 7; vertLabel.Parent = settingsDrawer
+        vertLabel.Size = UDim2.new(0, 100, 0, 15); vertLabel.Position = UDim2.new(0, 14, 0, 80); vertLabel.BackgroundTransparency = 1; vertLabel.Text = "Vertical Speed"; vertLabel.Font = Enum.Font.GothamMedium; vertLabel.TextSize = 11; vertLabel.TextXAlignment = Enum.TextXAlignment.Left; vertLabel.ZIndex = 7; vertLabel.Parent = settingsDrawer
+        table.insert(drawerElements, {Type = "Label", Instance = vertLabel})
         
         local vertValLabel = Instance.new("TextLabel")
-        vertValLabel.Size = UDim2.new(0, 60, 0, 15); vertValLabel.Position = UDim2.new(1, -74, 0, 80); vertValLabel.BackgroundTransparency = 1; vertValLabel.Text = tostring(senSettings.flyVerticalValue) .. " studs"; vertValLabel.Font = Enum.Font.GothamMedium; vertValLabel.TextSize = 11; vertValLabel.TextColor3 = Color3.fromRGB(60, 60, 60); vertValLabel.TextXAlignment = Enum.TextXAlignment.Right; vertValLabel.ZIndex = 7; vertValLabel.Parent = settingsDrawer
+        vertValLabel.Size = UDim2.new(0, 60, 0, 15); vertValLabel.Position = UDim2.new(1, -74, 0, 80); vertValLabel.BackgroundTransparency = 1; vertValLabel.Text = tostring(senSettings.flyVerticalValue) .. " studs"; vertValLabel.Font = Enum.Font.GothamMedium; vertValLabel.TextSize = 11; vertValLabel.TextXAlignment = Enum.TextXAlignment.Right; vertValLabel.ZIndex = 7; vertValLabel.Parent = settingsDrawer
+        table.insert(drawerElements, {Type = "ValueLabel", Instance = vertValLabel})
 
         local vertTrack = Instance.new("Frame")
-        vertTrack.Size = UDim2.new(1, -28, 0, 5); vertTrack.Position = UDim2.new(0, 14, 0, 98); vertTrack.BackgroundColor3 = Color3.fromRGB(215, 215, 215); vertTrack.BorderSizePixel = 0; vertTrack.ZIndex = 7; vertTrack.Parent = settingsDrawer
+        vertTrack.Size = UDim2.new(1, -28, 0, 5); vertTrack.Position = UDim2.new(0, 14, 0, 98); vertTrack.BorderSizePixel = 0; vertTrack.ZIndex = 7; vertTrack.Parent = settingsDrawer
         Instance.new("UICorner", vertTrack).CornerRadius = UDim.new(0, 2)
+        table.insert(drawerElements, {Type = "Track", Instance = vertTrack})
 
         local initialVertScale = math.clamp((senSettings.flyVerticalValue - 1) / 149, 0, 1)
         local vertFill = Instance.new("Frame")
@@ -450,8 +715,9 @@ if getcustomasset then
         Instance.new("UICorner", vertFill).CornerRadius = UDim.new(0, 2)
 
         local vertKnob = Instance.new("ImageButton")
-        vertKnob.Size = UDim2.new(0, 13, 0, 13); vertKnob.Position = UDim2.new(initialVertScale, 0, 0.5, 0); vertKnob.AnchorPoint = Vector2.new(0.5, 0.5); vertKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); vertKnob.ZIndex = 9; vertKnob.Parent = vertTrack
+        vertKnob.Size = UDim2.new(0, 13, 0, 13); vertKnob.Position = UDim2.new(initialVertScale, 0, 0.5, 0); vertKnob.AnchorPoint = Vector2.new(0.5, 0.5); vertKnob.ZIndex = 9; vertKnob.Parent = vertTrack
         Instance.new("UICorner", vertKnob).CornerRadius = UDim.new(1, 0)
+        table.insert(drawerElements, {Type = "Knob", Instance = vertKnob})
 
         local dragVert = false
         vertKnob.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragVert = true end end)
@@ -469,7 +735,6 @@ if getcustomasset then
         return toggleFlyState
     end
 
-    -- 3. PHASE MODULE
     local function createPhaseModule(targetParent)
         local moduleContainer = Instance.new("Frame")
         moduleContainer.Name = "PhaseModuleContainer"; moduleContainer.Size = UDim2.new(1, 0, 0, 40); moduleContainer.BackgroundTransparency = 1; moduleContainer.ClipsDescendants = true; moduleContainer.ZIndex = 6; moduleContainer.LayoutOrder = 3; moduleContainer.Parent = targetParent
@@ -478,10 +743,12 @@ if getcustomasset then
         mainButton.Size = UDim2.new(1, 0, 0, 40); mainButton.BackgroundTransparency = 1; mainButton.Text = ""; mainButton.ZIndex = 6; mainButton.Parent = moduleContainer
 
         local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(1, -110, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Phase"; titleLabel.TextColor3 = senSettings.phaseEnabled and accentColor or idleMainColor; titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
+        titleLabel.Size = UDim2.new(1, -110, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Phase"; titleLabel.TextColor3 = senSettings.phaseEnabled and accentColor or Color3.fromRGB(0,0,0); titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
+        table.insert(drawerElements, {Type = "ModuleTitle", Instance = titleLabel, ActiveCheck = function() return senSettings.phaseEnabled end})
 
         local settingsDrawer = Instance.new("Frame")
-        settingsDrawer.Size = UDim2.new(1, 0, 0, 110); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BackgroundColor3 = Color3.fromRGB(238, 238, 238); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
+        settingsDrawer.Size = UDim2.new(1, 0, 0, 110); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
+        table.insert(drawerElements, {Type = "Drawer", Instance = settingsDrawer})
 
         local isDrawerOpen = false
         local dotsButton = Instance.new("ImageButton")
@@ -489,40 +756,42 @@ if getcustomasset then
         dotsButton.MouseButton1Click:Connect(function() isDrawerOpen = not isDrawerOpen; TweenService:Create(moduleContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(1, 0, 0, isDrawerOpen and 150 or 40)}):Play() end)
 
         local bindBox = Instance.new("TextButton")
-        bindBox.Size = UDim2.new(0, 26, 0, 18); bindBox.Position = UDim2.new(1, -56, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.BackgroundColor3 = Color3.fromRGB(248, 248, 248); bindBox.Text = senSettings.phaseKeybind == "Unknown" and "-" or senSettings.phaseKeybind:upper():sub(1,3); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 10; bindBox.TextColor3 = Color3.fromRGB(140, 140, 140); bindBox.ZIndex = 7; bindBox.Parent = mainButton
+        bindBox.Size = UDim2.new(0, 26, 0, 18); bindBox.Position = UDim2.new(1, -56, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.Text = senSettings.phaseKeybind == "Unknown" and "-" or senSettings.phaseKeybind:upper():sub(1,3); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 10; bindBox.ZIndex = 7; bindBox.Parent = mainButton
         Instance.new("UICorner", bindBox).CornerRadius = UDim.new(0, 4)
+        table.insert(drawerElements, {Type = "BindBox", Instance = bindBox})
         setupBindLogic("phaseKeybind", bindBox)
 
         local function togglePhaseState()
             senSettings.phaseEnabled = not senSettings.phaseEnabled
-            TweenService:Create(titleLabel, tweenInfo, {TextColor3 = senSettings.phaseEnabled and accentColor or idleMainColor}):Play()
+            local targetColor = senSettings.phaseEnabled and accentColor or themeConfigs[senSettings.theme].textMain
+            TweenService:Create(titleLabel, tweenInfo, {TextColor3 = targetColor}):Play()
             createNotification("Phase Mode", "Feature has been " .. (senSettings.phaseEnabled and "Enabled" or "Disabled"))
             saveCurrentSettings()
         end
         mainButton.MouseButton1Click:Connect(togglePhaseState)
 
         local pDropdown = Instance.new("TextButton")
-        pDropdown.Size = UDim2.new(1, -28, 0, 28); pDropdown.Position = UDim2.new(0, 14, 0, 10); pDropdown.BackgroundColor3 = Color3.fromRGB(248, 248, 248); pDropdown.Text = "  Method - " .. senSettings.phaseMode; pDropdown.Font = Enum.Font.GothamMedium; pDropdown.TextSize = 12; pDropdown.TextColor3 = Color3.fromRGB(100, 100, 100); pDropdown.TextXAlignment = Enum.TextXAlignment.Left; pDropdown.ZIndex = 7; pDropdown.Parent = settingsDrawer
+        pDropdown.Size = UDim2.new(1, -28, 0, 28); pDropdown.Position = UDim2.new(0, 14, 0, 10); pDropdown.Text = "  Method - " .. senSettings.phaseMode; pDropdown.Font = Enum.Font.GothamMedium; pDropdown.TextSize = 12; pDropdown.TextXAlignment = Enum.TextXAlignment.Left; pDropdown.ZIndex = 7; pDropdown.Parent = settingsDrawer
         Instance.new("UICorner", pDropdown).CornerRadius = UDim.new(0, 4)
-
-        local arrow = Instance.new("ImageLabel")
-        arrow.Size = UDim2.new(0, 10, 0, 10); arrow.Position = UDim2.new(1, -18, 0.5, 0); arrow.AnchorPoint = Vector2.new(0, 0.5); arrow.BackgroundTransparency = 1; arrow.Image = "rbxassetid://6031094678"; arrow.ImageColor3 = Color3.fromRGB(140, 140, 140); arrow.ZIndex = 8; arrow.Parent = pDropdown
+        table.insert(drawerElements, {Type = "Field", Instance = pDropdown})
 
         local pList = Instance.new("Frame")
-        pList.Size = UDim2.new(1, 0, 0, 50); pList.Position = UDim2.new(0, 0, 1, 2); pList.BackgroundColor3 = Color3.fromRGB(250, 250, 250); pList.Visible = false; pList.ZIndex = 10; pList.Parent = pDropdown
+        pList.Size = UDim2.new(1, 0, 0, 50); pList.Position = UDim2.new(0, 0, 1, 2); pList.Visible = false; pList.ZIndex = 10; pList.Parent = pDropdown
         Instance.new("UICorner", pList).CornerRadius = UDim.new(0, 4)
+        table.insert(drawerElements, {Type = "Drawer", Instance = pList})
         local pUi = Instance.new("UIListLayout"); pUi.Parent = pList
 
         local pOpen = false
-        pDropdown.MouseButton1Click:Connect(function() pOpen = not pOpen; pList.Visible = pOpen; arrow.Rotation = pOpen and 180 or 0 end)
+        pDropdown.MouseButton1Click:Connect(function() pOpen = not pOpen; pList.Visible = pOpen end)
 
         for _, mName in ipairs({"Standard", "Semi-Solid"}) do
             local opt = Instance.new("TextButton")
-            opt.Size = UDim2.new(1, 0, 0, 25); opt.BackgroundTransparency = 1; opt.Text = "  " .. mName; opt.Font = Enum.Font.GothamMedium; opt.TextSize = 11; opt.TextColor3 = Color3.fromRGB(120, 120, 120); opt.TextXAlignment = Enum.TextXAlignment.Left; opt.ZIndex = 11; opt.Parent = pList
+            opt.Size = UDim2.new(1, 0, 0, 25); opt.BackgroundTransparency = 1; opt.Text = "  " .. mName; opt.Font = Enum.Font.GothamMedium; opt.TextSize = 11; opt.TextXAlignment = Enum.TextXAlignment.Left; opt.ZIndex = 11; opt.Parent = pList
+            table.insert(drawerElements, {Type = "Field", Instance = opt})
             opt.MouseButton1Click:Connect(function()
                 senSettings.phaseMode = mName
                 pDropdown.Text = "  Method - " .. mName
-                pOpen = false; pList.Visible = false; arrow.Rotation = 0
+                pOpen = false; pList.Visible = false
                 saveCurrentSettings()
             end)
         end
@@ -530,7 +799,6 @@ if getcustomasset then
         return togglePhaseState
     end
 
-    -- 4. SPIDER MODULE
     local function createSpiderModule(targetParent)
         local moduleContainer = Instance.new("Frame")
         moduleContainer.Name = "SpiderModuleContainer"; moduleContainer.Size = UDim2.new(1, 0, 0, 40); moduleContainer.BackgroundTransparency = 1; moduleContainer.ClipsDescendants = true; moduleContainer.ZIndex = 6; moduleContainer.LayoutOrder = 4; moduleContainer.Parent = targetParent
@@ -539,32 +807,37 @@ if getcustomasset then
         mainButton.Size = UDim2.new(1, 0, 0, 40); mainButton.BackgroundTransparency = 1; mainButton.Text = ""; mainButton.ZIndex = 6; mainButton.Parent = moduleContainer
 
         local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(1, -110, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Spider"; titleLabel.TextColor3 = senSettings.spiderEnabled and accentColor or idleMainColor; titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
+        titleLabel.Size = UDim2.new(1, -110, 1, 0); titleLabel.Position = UDim2.new(0, 14, 0, 0); titleLabel.BackgroundTransparency = 1; titleLabel.Text = "Spider"; titleLabel.TextColor3 = senSettings.spiderEnabled and accentColor or Color3.fromRGB(0,0,0); titleLabel.Font = Enum.Font.GothamMedium; titleLabel.TextSize = 14; titleLabel.TextXAlignment = Enum.TextXAlignment.Left; titleLabel.ZIndex = 7; titleLabel.Parent = mainButton
+        table.insert(drawerElements, {Type = "ModuleTitle", Instance = titleLabel, ActiveCheck = function() return senSettings.spiderEnabled end})
 
         local settingsDrawer = Instance.new("Frame")
-        settingsDrawer.Size = UDim2.new(1, 0, 0, 95); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BackgroundColor3 = Color3.fromRGB(238, 238, 238); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
+        settingsDrawer.Size = UDim2.new(1, 0, 0, 95); settingsDrawer.Position = UDim2.new(0, 0, 0, 40); settingsDrawer.BorderSizePixel = 0; settingsDrawer.ZIndex = 6; settingsDrawer.Parent = moduleContainer
+        table.insert(drawerElements, {Type = "Drawer", Instance = settingsDrawer})
 
         local isDrawerOpen = false
         local dotsButton = Instance.new("ImageButton")
-        dotsButton.Name = "DotsButton"; dotsButton.Size = UDim2.new(0, 16, 0, 16); dotsButton.Position = UDim2.new(1, -24, 0.5, 0); dotsButton.AnchorPoint = Vector2.new(0, 0.5); dotsButton.BackgroundTransparency = 1; dotsButton.Image = dotsAssetId; dotsButton.ScaleType = Enum.ScaleType.Fit; dotsButton.ImageColor3 = Color3.fromRGB(140, 140, 140); dotsButton.ZIndex = 7; dotsButton.Parent = mainButton
+        dotsButton.Size = UDim2.new(0, 16, 0, 16); dotsButton.Position = UDim2.new(1, -24, 0.5, 0); dotsButton.AnchorPoint = Vector2.new(0, 0.5); dotsButton.BackgroundTransparency = 1; dotsButton.Image = dotsAssetId; dotsButton.ScaleType = Enum.ScaleType.Fit; dotsButton.ImageColor3 = Color3.fromRGB(140, 140, 140); dotsButton.ZIndex = 7; dotsButton.Parent = mainButton
         dotsButton.MouseButton1Click:Connect(function() isDrawerOpen = not isDrawerOpen; TweenService:Create(moduleContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(1, 0, 0, isDrawerOpen and 135 or 40)}):Play() end)
 
         local bindBox = Instance.new("TextButton")
-        bindBox.Size = UDim2.new(0, 26, 0, 18); bindBox.Position = UDim2.new(1, -56, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.BackgroundColor3 = Color3.fromRGB(248, 248, 248); bindBox.Text = senSettings.spiderKeybind == "Unknown" and "-" or senSettings.spiderKeybind:upper():sub(1,3); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 10; bindBox.TextColor3 = Color3.fromRGB(140, 140, 140); bindBox.ZIndex = 7; bindBox.Parent = mainButton
+        bindBox.Size = UDim2.new(0, 26, 0, 18); bindBox.Position = UDim2.new(1, -56, 0.5, 0); bindBox.AnchorPoint = Vector2.new(0, 0.5); bindBox.Text = senSettings.spiderKeybind == "Unknown" and "-" or senSettings.spiderKeybind:upper():sub(1,3); bindBox.Font = Enum.Font.GothamMedium; bindBox.TextSize = 10; bindBox.ZIndex = 7; bindBox.Parent = mainButton
         Instance.new("UICorner", bindBox).CornerRadius = UDim.new(0, 4)
+        table.insert(drawerElements, {Type = "BindBox", Instance = bindBox})
         setupBindLogic("spiderKeybind", bindBox)
 
         local function toggleSpiderState()
             senSettings.spiderEnabled = not senSettings.spiderEnabled
-            TweenService:Create(titleLabel, tweenInfo, {TextColor3 = senSettings.spiderEnabled and accentColor or idleMainColor}):Play()
+            local targetColor = senSettings.spiderEnabled and accentColor or themeConfigs[senSettings.theme].textMain
+            TweenService:Create(titleLabel, tweenInfo, {TextColor3 = targetColor}):Play()
             createNotification("Spider Mode", "Feature has been " .. (senSettings.spiderEnabled and "Enabled" or "Disabled"))
             saveCurrentSettings()
         end
         mainButton.MouseButton1Click:Connect(toggleSpiderState)
 
         local animToggleBtn = Instance.new("TextButton")
-        animToggleBtn.Size = UDim2.new(1, -28, 0, 28); animToggleBtn.Position = UDim2.new(0, 14, 0, 10); animToggleBtn.BackgroundColor3 = Color3.fromRGB(248, 248, 248); animToggleBtn.Text = "  Climbing Animation: " .. (senSettings.spiderAnimEnabled and "ON" or "OFF"); animToggleBtn.Font = Enum.Font.GothamMedium; animToggleBtn.TextSize = 12; animToggleBtn.TextColor3 = Color3.fromRGB(100, 100, 100); animToggleBtn.TextXAlignment = Enum.TextXAlignment.Left; animToggleBtn.ZIndex = 7; animToggleBtn.Parent = settingsDrawer
+        animToggleBtn.Size = UDim2.new(1, -28, 0, 28); animToggleBtn.Position = UDim2.new(0, 14, 0, 10); animToggleBtn.Text = "  Climbing Animation: " .. (senSettings.spiderAnimEnabled and "ON" or "OFF"); animToggleBtn.Font = Enum.Font.GothamMedium; animToggleBtn.TextSize = 12; animToggleBtn.TextXAlignment = Enum.TextXAlignment.Left; animToggleBtn.ZIndex = 7; animToggleBtn.Parent = settingsDrawer
         Instance.new("UICorner", animToggleBtn).CornerRadius = UDim.new(0, 4)
+        table.insert(drawerElements, {Type = "Field", Instance = animToggleBtn})
         
         animToggleBtn.MouseButton1Click:Connect(function()
             senSettings.spiderAnimEnabled = not senSettings.spiderAnimEnabled
@@ -573,14 +846,17 @@ if getcustomasset then
         end)
 
         local speedLabel = Instance.new("TextLabel")
-        speedLabel.Size = UDim2.new(0, 100, 0, 15); speedLabel.Position = UDim2.new(0, 14, 0, 48); speedLabel.BackgroundTransparency = 1; speedLabel.Text = "Climb Speed"; speedLabel.Font = Enum.Font.GothamMedium; speedLabel.TextSize = 11; speedLabel.TextColor3 = Color3.fromRGB(60, 60, 60); speedLabel.TextXAlignment = Enum.TextXAlignment.Left; speedLabel.ZIndex = 7; speedLabel.Parent = settingsDrawer
+        speedLabel.Size = UDim2.new(0, 100, 0, 15); speedLabel.Position = UDim2.new(0, 14, 0, 48); speedLabel.BackgroundTransparency = 1; speedLabel.Text = "Climb Speed"; speedLabel.Font = Enum.Font.GothamMedium; speedLabel.TextSize = 11; speedLabel.TextXAlignment = Enum.TextXAlignment.Left; speedLabel.ZIndex = 7; speedLabel.Parent = settingsDrawer
+        table.insert(drawerElements, {Type = "Label", Instance = speedLabel})
         
         local speedValLabel = Instance.new("TextLabel")
-        speedValLabel.Size = UDim2.new(0, 60, 0, 15); speedValLabel.Position = UDim2.new(1, -74, 0, 48); speedValLabel.BackgroundTransparency = 1; speedValLabel.Text = tostring(senSettings.spiderValue) .. " studs"; speedValLabel.Font = Enum.Font.GothamMedium; speedValLabel.TextSize = 11; speedValLabel.TextColor3 = Color3.fromRGB(60, 60, 60); speedValLabel.TextXAlignment = Enum.TextXAlignment.Right; speedValLabel.ZIndex = 7; speedValLabel.Parent = settingsDrawer
+        speedValLabel.Size = UDim2.new(0, 60, 0, 15); speedValLabel.Position = UDim2.new(1, -74, 0, 48); speedValLabel.BackgroundTransparency = 1; speedValLabel.Text = tostring(senSettings.spiderValue) .. " studs"; speedValLabel.Font = Enum.Font.GothamMedium; speedValLabel.TextSize = 11; speedValLabel.TextXAlignment = Enum.TextXAlignment.Right; speedValLabel.ZIndex = 7; speedValLabel.Parent = settingsDrawer
+        table.insert(drawerElements, {Type = "ValueLabel", Instance = speedValLabel})
 
         local track = Instance.new("Frame")
-        track.Size = UDim2.new(1, -28, 0, 5); track.Position = UDim2.new(0, 14, 0, 66); track.BackgroundColor3 = Color3.fromRGB(215, 215, 215); track.BorderSizePixel = 0; track.ZIndex = 7; track.Parent = settingsDrawer
+        track.Size = UDim2.new(1, -28, 0, 5); track.Position = UDim2.new(0, 14, 0, 66); track.BorderSizePixel = 0; track.ZIndex = 7; track.Parent = settingsDrawer
         Instance.new("UICorner", track).CornerRadius = UDim.new(0, 2)
+        table.insert(drawerElements, {Type = "Track", Instance = track})
 
         local initScale = math.clamp((senSettings.spiderValue - 1) / 149, 0, 1)
         local fill = Instance.new("Frame")
@@ -588,8 +864,9 @@ if getcustomasset then
         Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 2)
 
         local knob = Instance.new("ImageButton")
-        knob.Size = UDim2.new(0, 13, 0, 13); knob.Position = UDim2.new(initScale, 0, 0.5, 0); knob.AnchorPoint = Vector2.new(0.5, 0.5); knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); knob.ZIndex = 9; knob.Parent = track
+        knob.Size = UDim2.new(0, 13, 0, 13); knob.Position = UDim2.new(initScale, 0, 0.5, 0); knob.AnchorPoint = Vector2.new(0.5, 0.5); knob.ZIndex = 9; knob.Parent = track
         Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+        table.insert(drawerElements, {Type = "Knob", Instance = knob})
 
         local dragging = false
         knob.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
@@ -607,15 +884,39 @@ if getcustomasset then
         return toggleSpiderState
     end
 
-    local triggerSpeedToggle  = createSpeedModule(subContainerList)
-    local triggerFlyToggle    = createFlyModule(subContainerList)
-    local triggerPhaseToggle  = createPhaseModule(subContainerList)
-    local triggerSpiderToggle = createSpiderModule(subContainerList)
+    local triggerSpeedToggle  = createSpeedModule(blatantContentFrame)
+    local triggerFlyToggle    = createFlyModule(blatantContentFrame)
+    local triggerPhaseToggle  = createPhaseModule(blatantContentFrame)
+    local triggerSpiderToggle = createSpiderModule(blatantContentFrame)
 
-    createCategoryRow("Blatant", "Blatant", blatantIconPath, 1, function() subMenuFrame.Visible = (activeCategory == "Blatant") end)
-    createCategoryRow("Utility", "Utility", utilityIconPath, 2, function() subMenuFrame.Visible = false end)
+    createCategoryRow("Blatant", "Blatant", blatantIconPath, 1, function() 
+        if activeCategory == "Blatant" then
+            subMenuFrame.Visible = true
+            blatantContentFrame.Visible = true
+            utilityContentFrame.Visible = false
+            subHeaderTitle.Text = "Blatant"
+            subHeaderSkull.Image = getcustomasset(blatantIconPath)
+        else
+            subMenuFrame.Visible = false
+            blatantContentFrame.Visible = false
+        end
+    end)
+    
+    createCategoryRow("Utility", "Utility", utilityIconPath, 2, function() 
+        if activeCategory == "Utility" then
+            subMenuFrame.Visible = true
+            utilityContentFrame.Visible = true
+            blatantContentFrame.Visible = false
+            subHeaderTitle.Text = "Utility"
+            subHeaderSkull.Image = getcustomasset(utilityIconPath)
+        else
+            subMenuFrame.Visible = false
+            utilityContentFrame.Visible = false
+        end
+    end)
 
-    -- Runtime Modules Processing
+    applyVisualTheme()
+
     RunService.RenderStepped:Connect(function()
         local char = LocalPlayer.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
@@ -674,24 +975,26 @@ if getcustomasset then
         end
     end)
 
-    -- Keybind Detection Loop
+    local function handleKeybindTriggers(input)
+        if senSettings.speedKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.speedKeybind then triggerSpeedToggle() end
+        if senSettings.flyKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.flyKeybind then triggerFlyToggle() end
+        if senSettings.phaseKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.phaseKeybind then triggerPhaseToggle() end
+        if senSettings.spiderKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.spiderKeybind then triggerSpiderToggle() end
+    end
+
     UserInputService.InputBegan:Connect(function(input, processed)
         if not processed then
-            if senSettings.speedKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.speedKeybind then triggerSpeedToggle() end
-            if senSettings.flyKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.flyKeybind then triggerFlyToggle() end
-            if senSettings.phaseKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.phaseKeybind then triggerPhaseToggle() end
-            if senSettings.spiderKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.spiderKeybind then triggerSpiderToggle() end
+            handleKeybindTriggers(input)
         end
     end)
 
     local menuOpen = true
     local menuBlur = Instance.new("BlurEffect"); menuBlur.Name = "SenMenuBlur"; menuBlur.Size = 24; menuBlur.Enabled = true; menuBlur.Parent = Lighting
     UserInputService.InputBegan:Connect(function(input)
-        if input.KeyCode == Enum.KeyCode.RightBracket then
+        if senSettings.menuKeybind ~= "Unknown" and input.KeyCode.Name == senSettings.menuKeybind then
             menuOpen = not menuOpen; mainFrame.Visible = menuOpen; subMenuFrame.Visible = (menuOpen and subMenuFrame.Visible); menuBlur.Enabled = menuOpen
         end
     end)
 
-    -- First initialization load toast
-    createNotification("Finished Loading", "Press RIGHTBRACKET to toggle menu UI")
+    createNotification("Finished Loading", "Press " .. senSettings.menuKeybind:upper() .. " to toggle menu UI")
 end
