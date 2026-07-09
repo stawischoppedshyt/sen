@@ -1,3 +1,4 @@
+
 local HttpService = game:GetService("HttpService")
 local folderName  = "sen_v4"
 local settingsFile = folderName .. "/config.json"
@@ -51,6 +52,11 @@ local function initializeConfig()
             flyVerticalValue = 50,
             flyKeybind = "Unknown",
             flyKeysMode = "Space/LeftControl",
+            flyMode = "Velocity",
+            speedMode = "Velocity",
+            holdJumpEnabled = false,
+            holdJumpValue = 50,
+            holdJumpKeybind = "Unknown",
             phaseEnabled = false,
             phaseKeybind = "Unknown",
             phaseMode = "Standard",
