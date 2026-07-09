@@ -1,15 +1,12 @@
-
 local HttpService = game:GetService("HttpService")
 local folderName  = "sen_v4"
 local settingsFile = folderName .. "/config.json"
-
 
 if makefolder then
     pcall(function()
         makefolder(folderName)
     end)
 end
-
 
 local assetUrls = {
     ["logo.png"]           = "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/logo.png",
@@ -42,7 +39,7 @@ end
 local function initializeConfig()
     if isfile and not isfile(settingsFile) then
         local defaultSettings = {
-            theme = "Dark",
+            theme = "Light", -- Matched default theme environment fallback
             menuKeybind = "RightBracket",
             speedEnabled = false,
             speedValue = 50,
@@ -87,7 +84,7 @@ local function launchGuiPayload()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/stawischoppedshyt/sen/refs/heads/main/loader/gui"))()
     end)
     if not success then
-        warn("Sen V4 Loader Error: Failed to execute main script : " .. tostring(err))
+        warn("Sen V4 Loader Error: Failed to load : " .. tostring(err))
     end
 end
 
