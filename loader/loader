@@ -2,16 +2,19 @@ local HttpService = game:GetService("HttpService")
 local folderName  = "sen_v4"
 local settingsFile = folderName .. "/config.json"
 
+
 if makefolder then
     pcall(function()
         makefolder(folderName)
     end)
 end
 
+
 local assetUrls = {
-    ["logo.png"]           = "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/logo.png",
+    ["logo.png"]           = "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/senv4.png",
     ["blatanticon.png"]    = "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/blatanticon.png",
     ["utilityicon.png"]    = "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/utilityicon.png",
+    ["rendericon.png"]     = "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/rendericon.png",
     ["info.png"]           = "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/info.png",
     ["customsettings.png"] = "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/customsettings.png",
     ["back.png"]           = "https://raw.githubusercontent.com/stawischoppedshyt/sen/main/images/back.png",
@@ -39,7 +42,7 @@ end
 local function initializeConfig()
     if isfile and not isfile(settingsFile) then
         local defaultSettings = {
-            theme = "Light", -- Matched default theme environment fallback
+            theme = "Light",
             menuKeybind = "RightBracket",
             speedEnabled = false,
             speedValue = 50,
@@ -63,6 +66,11 @@ local function initializeConfig()
             spiderAnimEnabled = true,
             antiFlingEnabled = false,
             antiFlingKeybind = "Unknown",
+            cameraNoclipEnabled = false,
+            renderESPEnabled = false,
+            brainrotMinHighlight = 1000000,
+            renderAntiLagEnabled = false,
+            instantPromptEnabled = false,
             notificationsEnabled = true,
             blurEnabled = true
         }
@@ -84,7 +92,7 @@ local function launchGuiPayload()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/stawischoppedshyt/sen/refs/heads/main/loader/gui"))()
     end)
     if not success then
-        warn("Sen V4 Loader Error: Failed to load : " .. tostring(err))
+        warn("Sen V4 Loader Error: Failed to execute main script : " .. tostring(err))
     end
 end
 
