@@ -1,6 +1,9 @@
+
 local HttpService = game:GetService("HttpService")
 local folderName  = "sen_v4"
 local settingsFile = folderName .. "/config.json"
+local supportedPlaceId = 114528917072225
+local isSupportedGame = game.PlaceId == supportedPlaceId
 
 
 if makefolder then
@@ -40,42 +43,97 @@ end
 
 -- configurations if they do not exist
 local function initializeConfig()
-    if isfile and not isfile(settingsFile) then
-        local defaultSettings = {
-            theme = "Light",
-            menuKeybind = "RightBracket",
-            speedEnabled = false,
-            speedValue = 50,
-            speedKeybind = "Unknown",
-            flyEnabled = false,
-            flyValue = 50,
-            flyVerticalValue = 50,
-            flyKeybind = "Unknown",
-            flyKeysMode = "Space/LeftControl",
-            flyMode = "Velocity",
-            speedMode = "Velocity",
-            holdJumpEnabled = false,
-            holdJumpValue = 50,
-            holdJumpKeybind = "Unknown",
-            phaseEnabled = false,
-            phaseKeybind = "Unknown",
-            phaseMode = "Standard",
-            spiderEnabled = false,
-            spiderValue = 30,
-            spiderKeybind = "Unknown",
-            spiderAnimEnabled = true,
-            antiFlingEnabled = false,
-            antiFlingKeybind = "Unknown",
-            cameraNoclipEnabled = false,
-            renderESPEnabled = false,
-            brainrotMinHighlight = 1000000,
-            renderAntiLagEnabled = false,
-            instantPromptEnabled = false,
-            notificationsEnabled = true,
-            blurEnabled = true
-        }
+    local defaultSettings = {
+        theme = "Light",
+        menuKeybind = "RightBracket",
+        speedEnabled = false,
+        speedValue = isSupportedGame and 23 or 50,
+        speedKeybind = "Unknown",
+        flyEnabled = false,
+        flyValue = isSupportedGame and 40 or 50,
+        flyVerticalValue = isSupportedGame and 40 or 50,
+        flyKeybind = "Unknown",
+        flyKeysMode = "Space/LeftControl",
+        flyMode = "Velocity",
+        speedMode = "Velocity",
+        holdJumpEnabled = false,
+        holdJumpValue = 50,
+        holdJumpKeybind = "Unknown",
+        phaseEnabled = false,
+        phaseKeybind = "Unknown",
+        phaseMode = "Standard",
+        spiderEnabled = false,
+        spiderValue = 30,
+        spiderKeybind = "Unknown",
+        spiderAnimEnabled = true,
+        antiFlingEnabled = false,
+        antiFlingKeybind = "Unknown",
+        cameraNoclipEnabled = false,
+        renderESPEnabled = false,
+        playerESPEnabled = false,
+        tpBestBrainrotKeybind = "Unknown",
+        brainrotMinHighlight = 1000000,
+        renderAntiLagEnabled = false,
+        instantPromptEnabled = false,
+        notificationsEnabled = true,
+        blurEnabled = true
+    }
+
+    if not writefile then
+        return
+    end
+
+    local configData = {}
+    local needsWrite = false
+
+    if isfile and isfile(settingsFile) and readfile then
+        local ok, parsed = pcall(function()
+            return HttpService:JSONDecode(readfile(settingsFile))
+        end)
+        if ok and type(parsed) == "table" then
+            configData = parsed
+        else
+            needsWrite = true
+        end
+    else
+        needsWrite = true
+    end
+
+    -- Migrate existing configs by adding missing keys from new features.
+    for key, value in pairs(defaultSettings) do
+        if configData[key] == nil then
+            configData[key] = value
+            needsWrite = true
+        end
+    end
+
+    -- Keep loader-side config aligned with supported-game UI constraints.
+    if isSupportedGame then
+        local clampedSpeed = math.clamp(tonumber(configData.speedValue) or defaultSettings.speedValue, 1, 23)
+        local clampedFly = math.clamp(tonumber(configData.flyValue) or defaultSettings.flyValue, 1, 40)
+        local clampedVerticalFly = math.clamp(tonumber(configData.flyVerticalValue) or defaultSettings.flyVerticalValue, 1, 40)
+
+        if configData.speedValue ~= clampedSpeed then
+            configData.speedValue = clampedSpeed
+            needsWrite = true
+        end
+        if configData.flyValue ~= clampedFly then
+            configData.flyValue = clampedFly
+            needsWrite = true
+        end
+        if configData.flyVerticalValue ~= clampedVerticalFly then
+            configData.flyVerticalValue = clampedVerticalFly
+            needsWrite = true
+        end
+        if configData.antiFlingEnabled ~= false then
+            configData.antiFlingEnabled = false
+            needsWrite = true
+        end
+    end
+
+    if needsWrite then
         pcall(function()
-            writefile(settingsFile, HttpService:JSONEncode(defaultSettings))
+            writefile(settingsFile, HttpService:JSONEncode(configData))
         end)
     end
 end
