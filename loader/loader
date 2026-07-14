@@ -1,4 +1,3 @@
-
 local HttpService = game:GetService("HttpService")
 local folderName  = "sen_v4"
 local settingsFile = folderName .. "/config.json"
@@ -72,6 +71,8 @@ local function initializeConfig()
         renderESPEnabled = false,
         playerESPEnabled = false,
         tpBestBrainrotKeybind = "Unknown",
+        semiInvisEnabled = false,
+        semiInvisKeybind = "Unknown",
         brainrotMinHighlight = 1000000,
         renderAntiLagEnabled = false,
         instantPromptEnabled = false,
