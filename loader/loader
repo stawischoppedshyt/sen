@@ -1,3 +1,4 @@
+
 local HttpService = game:GetService("HttpService")
 local folderName  = "sen_v4"
 local settingsFile = folderName .. "/config.json"
@@ -46,11 +47,11 @@ local function initializeConfig()
         theme = "Light",
         menuKeybind = "RightBracket",
         speedEnabled = false,
-        speedValue = isSupportedGame and 23 or 50,
+        speedValue = 50,
         speedKeybind = "Unknown",
         flyEnabled = false,
-        flyValue = isSupportedGame and 40 or 50,
-        flyVerticalValue = isSupportedGame and 40 or 50,
+        flyValue = 50,
+        flyVerticalValue = 50,
         flyKeybind = "Unknown",
         flyKeysMode = "Space/LeftControl",
         flyMode = "Velocity",
